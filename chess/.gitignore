@@ -27,3 +27,9 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Maven ###
+target
+
+### Chess Project ###
+server/**/d
