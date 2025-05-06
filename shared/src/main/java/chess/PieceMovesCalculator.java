@@ -5,21 +5,24 @@ import java.util.*;
 import static chess.ChessGame.TeamColor.WHITE;
 
 public class PieceMovesCalculator {
-    private static final int[][] BISHOP_MOVES = {
+    private static final int[][] BISHOP_DIRECTION = {
             {1, 1,}, {1, -1}, {-1, 1}, {-1, -1}
     };
-    private static final int[][] ROOK_MOVES = {
+    private static final int[][] ROOK_DIRECTION = {
             {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
-    private static final int[][] QUEEN_MOVES = {
+    private static final int[][] QUEEN_DIRECTION = {
             {1, 1,}, {1, -1}, {-1, 1}, {-1, -1},
             {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
-    private static final int[][] KNIGHTS_MOVES = {
+    private static final int[][] KNIGHTS_DIRECTION = {
             {2,1},{2,-1},{-2,1},{-2,-1},{1,2},{1,-2},{-1,2},{-1,-2}
     };
-    private static final int[][] KING_MOVES = {
+    private static final int[][] KING_DIRECTION = {
             {1,1},{1,0},{1,-1},{0,1},{0,-1},{-1,1},{-1,0},{-1,-1}
+    };
+    private static final int[][] PAWN_DIRECTION = {
+            {1,1}, {1,-1}
     };
 
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position) {
@@ -99,23 +102,23 @@ public class PieceMovesCalculator {
     }
 
     public Collection<ChessMove> calculateKingMoves(ChessBoard board, ChessPosition position) {
-        return createSteppingPieces(board, position, KING_MOVES);
+        return createSteppingPieces(board, position, KING_DIRECTION);
     }
 
     public Collection<ChessMove> calculateQueenMoves(ChessBoard board, ChessPosition position) {
-        return createSlidingPieces(board, position, QUEEN_MOVES);
+        return createSlidingPieces(board, position, QUEEN_DIRECTION);
     }
 
     public Collection<ChessMove> calculateRookMoves(ChessBoard board, ChessPosition position) {
-        return createSlidingPieces(board, position, ROOK_MOVES);
+        return createSlidingPieces(board, position, ROOK_DIRECTION);
     }
 
     public Collection<ChessMove> calculateBishopMoves(ChessBoard board, ChessPosition position) {
-        return createSlidingPieces(board, position, BISHOP_MOVES);
+        return createSlidingPieces(board, position, BISHOP_DIRECTION);
     }
 
     public Collection<ChessMove> calculateKnightMoves(ChessBoard board, ChessPosition position) {
-        return createSteppingPieces(board, position, KNIGHTS_MOVES);
+        return createSteppingPieces(board, position, KNIGHTS_DIRECTION);
     }
 
     /**
@@ -127,7 +130,8 @@ public class PieceMovesCalculator {
      * @param colDirection The direction of the column
      * @param promotionPiece Whether the pawn can promote
      */
-    private void helpPawnMoves(ChessBoard board, List<ChessMove> possibleMoves, ChessPosition startPosition, int rowDirection, int colDirection, ChessPiece.PieceType promotionPiece) {
+    private void helpPawnMoves(ChessBoard board, List<ChessMove> possibleMoves, ChessPosition startPosition,
+                               int rowDirection, int colDirection, ChessPiece.PieceType promotionPiece) {
         int row = startPosition.getRow() + rowDirection, col = startPosition.getColumn() + colDirection;
         if (row < 1 || row > 8 || col < 1 || col > 8) {
             return;
@@ -135,26 +139,16 @@ public class PieceMovesCalculator {
         ChessPosition endPosition = new ChessPosition(row, col);
         ChessPiece endSquarePiece = board.getPiece(endPosition);
         ChessPiece piece = board.getPiece(startPosition);
+
         if (colDirection == 0) {
             if (endSquarePiece == null) {
                 possibleMoves.add(new ChessMove(startPosition, endPosition, promotionPiece));
-            } else {
+            }
+        } else {
                 if (endSquarePiece != null && endSquarePiece.getTeamColor() != piece.getTeamColor()) {
                     possibleMoves.add(new ChessMove(startPosition, endPosition, promotionPiece));
                 }
             }
-        }
-    }
-
-    /**
-     *
-     * @param position The position of the pawn to be offset
-     * @param rowDirection The direction of the row
-     * @param colDirection The direction of the column
-     * @return The now offset position of the pawn
-     */
-    private ChessPosition offset(ChessPosition position, int rowDirection, int colDirection) {
-        return new ChessPosition(position.getRow() + rowDirection, position.getColumn() + colDirection);
     }
 
     /**
@@ -169,19 +163,29 @@ public class PieceMovesCalculator {
         if (pawn == null) {
             return moves;
         }
-        int direction = pawn.getTeamColor() == WHITE ? +1 : -1;
-        helpPawnMoves(board, moves, position, direction, 0, null);
+        int forward = pawn.getTeamColor() == WHITE ? 1 : -1;
+        helpPawnMoves(board, moves, position, forward, 0, null);
 
         int homeRank = pawn.getTeamColor() == WHITE ? 2 : 7;
         if (position.getRow() == homeRank) {
-            if (board.getPiece(offset(position, direction, 0)) == null) {
-                helpPawnMoves(board, moves, position, direction*2, 0, null);
+            int midRow = position.getRow() + forward;
+            int midCol = position.getColumn();
+            ChessPosition midPosition = new ChessPosition(midRow, midCol);
+            if (board.getPiece(midPosition) == null) {
+                helpPawnMoves(board, moves, position, forward*2, 0, null);
             }
         }
 
-        helpPawnMoves(board, moves, position, direction, 1, null);
-        helpPawnMoves(board, moves, position, direction, -1, null);
-
+        int backRow = pawn.getTeamColor() == WHITE ? 1 : 8;
+        for (var offset : PAWN_DIRECTION) {
+            if (position.getRow() == backRow) {
+                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.QUEEN);
+                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.BISHOP);
+                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.ROOK);
+                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.KNIGHT);
+            }
+            helpPawnMoves(board, moves, position, forward * offset[0], offset[1], null);
+        }
         return moves;
     }
 }
