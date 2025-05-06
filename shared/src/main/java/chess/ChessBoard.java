@@ -31,6 +31,21 @@ public class ChessBoard {
         return Arrays.deepHashCode(squares);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int row = 7; row >= 0; row--) {
+            stringBuilder.append(row+1).append(" ");
+            for (int col = 0; col < 8; col++) {
+                ChessPiece piece = squares[row][col];
+                stringBuilder.append(piece == null ? ". " : piece.toString() + " ");
+            }
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("  a b c d e f g h");
+        return stringBuilder.toString();
+    }
+
     /**
      * Adds a chess piece to the chessboard
      *

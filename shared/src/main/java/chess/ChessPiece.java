@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
+import static chess.ChessGame.TeamColor.*;
+
 /**
  * Represents a single chess piece
  * <p>
@@ -62,6 +64,18 @@ public class ChessPiece {
     @Override
     public int hashCode() {
         return Objects.hash(pieceColor, type);
+    }
+
+    @Override
+    public String toString() {
+        return switch (type) {
+            case PAWN -> pieceColor == WHITE ? "P" : "p";
+            case ROOK -> pieceColor == WHITE ? "R" : "r";
+            case QUEEN -> pieceColor == WHITE ? "Q" : "q";
+            case KING -> pieceColor == WHITE ? "K" : "k";
+            case KNIGHT -> pieceColor == WHITE ? "N" : "n";
+            case BISHOP -> pieceColor == WHITE ? "B" : "b";
+        };
     }
 
     /**
