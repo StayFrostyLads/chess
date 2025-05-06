@@ -21,7 +21,9 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        squares[position.getRow()][position.getColumn()] = piece;
+        int row = position.getRow()-1;
+        int col = position.getColumn()-1;
+        squares[row][col] = piece;
     }
 
     /**
@@ -32,30 +34,9 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return squares[position.getRow()][position.getColumn()];
-    }
-
-    /**
-     * Sets the board to the default starting board
-     * (How the game of chess normally starts)
-     */
-    public void resetBoard() {
-
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                squares[row][col] = null;
-            }
-        }
-
-        for (int col = 0; col < 8; col++) {
-            squares[1][col] = makePiece(PAWN, WHITE);
-            squares[6][col] = makePiece(PAWN, BLACK);
-        }
-        ChessPiece.PieceType [] backRank = { ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK};
-        for (int col = 0; col < backRank.length; col++) {
-            squares[0][col] = makePiece(backRank[col], WHITE);
-            squares[7][col] = makePiece(backRank[col], BLACK);
-        }
+        int row = position.getRow()-1;
+        int col = position.getColumn()-1;
+        return squares[row][col];
     }
 
     /**
@@ -73,7 +54,30 @@ public class ChessBoard {
             case BISHOP -> new Bishop(color);
             case QUEEN -> new Queen(color);
             case KING -> new King(color);
-            default -> throw new IllegalArgumentException("Unknown piece: ", piece);
         };
     }
+
+    /**
+     * Sets the board to the default starting board
+     * (How the game of chess normally starts)
+     */
+    public void resetBoard() {
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                squares[row][col] = null;
+            }
+        }
+
+        for (int col = 1; col <= 8; col++) {
+            addPiece(new ChessPosition(2, col), makePiece(PAWN, WHITE));
+            addPiece(new ChessPosition(7, col), makePiece(PAWN, BLACK));
+        }
+        ChessPiece.PieceType [] backRank = { ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK};
+        for (int col = 1; col <= 8; col++) {
+            addPiece(new ChessPosition(1, col), makePiece(backRank[col-1], WHITE));
+            addPiece(new ChessPosition(8, col), makePiece(backRank[col-1], BLACK));
+        }
+    }
+
 }
