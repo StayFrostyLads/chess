@@ -4,6 +4,13 @@ import java.util.Objects;
 
 import static chess.ChessGame.TeamColor.*;
 import static chess.ChessPiece.PieceType.*;
+import static chess.ChessPiece.Pawn;
+import static chess.ChessPiece.Rook;
+import static chess.ChessPiece.Bishop;
+import static chess.ChessPiece.Knight;
+import static chess.ChessPiece.King;
+import static chess.ChessPiece.Queen;
+
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -105,7 +112,7 @@ public class ChessBoard {
             addPiece(new ChessPosition(2, col), makePiece(PAWN, WHITE));
             addPiece(new ChessPosition(7, col), makePiece(PAWN, BLACK));
         }
-        ChessPiece.PieceType [] backRank = { ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK};
+        ChessPiece.PieceType [] backRank = { ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK };
         for (int col = 1; col <= 8; col++) {
             addPiece(new ChessPosition(1, col), makePiece(backRank[col-1], WHITE));
             addPiece(new ChessPosition(8, col), makePiece(backRank[col-1], BLACK));

@@ -53,10 +53,10 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof ChessPiece)) {
             return false;
         }
-        ChessPiece that = (ChessPiece) o;
+        ChessPiece that = (ChessPiece)o;
         return pieceColor == that.pieceColor && type == that.type;
     }
 
@@ -76,6 +76,43 @@ public class ChessPiece {
             case BISHOP -> pieceColor == WHITE ? "B" : "b";
         };
     }
+
+    public static class Pawn extends ChessPiece {
+        public Pawn(ChessGame.TeamColor color) {
+            super(color, PieceType.PAWN);
+        }
+    }
+
+    public static class Bishop extends ChessPiece {
+        public Bishop(ChessGame.TeamColor color) {
+            super(color, PieceType.BISHOP);
+        }
+    }
+
+    public static class Knight extends ChessPiece {
+        public Knight(ChessGame.TeamColor color) {
+            super(color, PieceType.KNIGHT);
+        }
+    }
+
+    public static class Queen extends ChessPiece {
+        public Queen(ChessGame.TeamColor color) {
+            super(color, PieceType.QUEEN);
+        }
+    }
+
+    public static class King extends ChessPiece {
+        public King(ChessGame.TeamColor color) {
+            super(color, PieceType.KING);
+        }
+    }
+
+    public static class Rook extends ChessPiece {
+        public Rook(ChessGame.TeamColor color) {
+            super(color, PieceType.ROOK);
+        }
+    }
+
 
     /**
      * Calculates all the positions a chess piece can move to
