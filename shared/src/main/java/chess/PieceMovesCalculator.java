@@ -184,9 +184,8 @@ public class PieceMovesCalculator {
         int forward = pawn.getTeamColor() == WHITE ? 1 : -1;
         int promotionRow = pawn.getTeamColor() == WHITE ? 8 : 1;
         int oneRow = position.getRow() + forward;
-        int oneCol = position.getColumn();
 
-        if (oneRow >= 1 && oneRow <= 8 && board.getPiece(new ChessPosition(oneRow, oneCol)) == null) {
+        if (oneRow >= 1 && oneRow <= 8) {
             if (oneRow == promotionRow) {
                 checkForPromotion(board, moves, position, forward, 0);
             } else {
@@ -207,11 +206,8 @@ public class PieceMovesCalculator {
         for (var offset : PAWN_CAPTURE_OFFSET) {
             int rowDirection = forward * offset[0], colDirection = offset[1];
             int endRow = position.getRow() + rowDirection;
-            int endCol = position.getColumn() + colDirection;
 
-            ChessPosition endPosition = new ChessPosition(endRow, endCol);
-            ChessPiece endSquarePiece = board.getPiece(endPosition);
-            if (endRow == promotionRow && endSquarePiece != null && endSquarePiece.getTeamColor() != pawn.getTeamColor()) {
+            if (endRow == promotionRow) {
                 checkForPromotion(board, moves, position, rowDirection, colDirection);
             } else {
                 helpPawnMoves(board, moves, position, rowDirection, colDirection, null);
