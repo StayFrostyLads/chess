@@ -3,6 +3,7 @@ package chess;
 import java.util.*;
 
 import static chess.ChessGame.TeamColor.WHITE;
+import static chess.ChessPiece.PieceType.*;
 
 public class PieceMovesCalculator {
     private static final int[][] BISHOP_DIRECTION = {
@@ -21,9 +22,11 @@ public class PieceMovesCalculator {
     private static final int[][] KING_DIRECTION = {
             {1,1},{1,0},{1,-1},{0,1},{0,-1},{-1,1},{-1,0},{-1,-1}
     };
-    private static final int[][] PAWN_DIRECTION = {
+    private static final int[][] PAWN_CAPTURE_OFFSET = {
             {1,1}, {1,-1}
     };
+    private static final List<ChessPiece.PieceType> PROMOTION_OPTIONS =
+            List.of(QUEEN, ROOK, BISHOP, KNIGHT);
 
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition position) {
         ChessPiece piece = board.getPiece(position);
@@ -126,9 +129,9 @@ public class PieceMovesCalculator {
      * @param board The chess board
      * @param possibleMoves A list of the possible moves available for the pawn based on the position
      * @param startPosition The starting position of the piece moving
-     * @param rowDirection The direction of the row
-     * @param colDirection The direction of the column
-     * @param promotionPiece Whether the pawn can promote
+     * @param rowDirection The direction of the row (+1 or -1 for forward steps)
+     * @param colDirection The direction of the column (+1 or -1 for diagonal steps)
+     * @param promotionPiece The piece to which the pawn can promote (null by default)
      */
     private void helpPawnMoves(ChessBoard board, List<ChessMove> possibleMoves, ChessPosition startPosition,
                                int rowDirection, int colDirection, ChessPiece.PieceType promotionPiece) {
@@ -154,6 +157,21 @@ public class PieceMovesCalculator {
     /**
      *
      * @param board The chess board
+     * @param possibleMoves The list of possible moves
+     * @param startPosition The starting position of the piece
+     * @param rowDirection The direction of the row (+1 or -1 for forward steps)
+     * @param colDirection The direction of the column (+1 or -1 for diagonal steps)
+     */
+    private void checkForPromotion(ChessBoard board, List<ChessMove> possibleMoves,
+                                   ChessPosition startPosition, int rowDirection, int colDirection) {
+        for (ChessPiece.PieceType promotedPiece : PROMOTION_OPTIONS) {
+            helpPawnMoves(board, possibleMoves, startPosition, rowDirection, colDirection, promotedPiece);
+        }
+    }
+
+    /**
+     *
+     * @param board The chess board
      * @param position The position of the pawn
      * @return An array list of moves that the pawn can make
      */
@@ -164,7 +182,17 @@ public class PieceMovesCalculator {
             return moves;
         }
         int forward = pawn.getTeamColor() == WHITE ? 1 : -1;
-        helpPawnMoves(board, moves, position, forward, 0, null);
+        int promotionRow = pawn.getTeamColor() == WHITE ? 8 : 1;
+        int oneRow = position.getRow() + forward;
+        int oneCol = position.getColumn();
+
+        if (oneRow >= 1 && oneRow <= 8 && board.getPiece(new ChessPosition(oneRow, oneCol)) == null) {
+            if (oneRow == promotionRow) {
+                checkForPromotion(board, moves, position, forward, 0);
+            } else {
+                helpPawnMoves(board, moves, position, forward, 0, null);
+            }
+        }
 
         int homeRank = pawn.getTeamColor() == WHITE ? 2 : 7;
         if (position.getRow() == homeRank) {
@@ -176,16 +204,20 @@ public class PieceMovesCalculator {
             }
         }
 
-        int backRow = pawn.getTeamColor() == WHITE ? 1 : 8;
-        for (var offset : PAWN_DIRECTION) {
-            if (position.getRow() == backRow) {
-                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.QUEEN);
-                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.BISHOP);
-                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.ROOK);
-                helpPawnMoves(board, moves, position, forward * offset[0], offset[1], ChessPiece.PieceType.KNIGHT);
+        for (var offset : PAWN_CAPTURE_OFFSET) {
+            int rowDirection = forward * offset[0], colDirection = offset[1];
+            int endRow = position.getRow() + rowDirection;
+            int endCol = position.getColumn() + colDirection;
+
+            ChessPosition endPosition = new ChessPosition(endRow, endCol);
+            ChessPiece endSquarePiece = board.getPiece(endPosition);
+            if (endRow == promotionRow && endSquarePiece != null && endSquarePiece.getTeamColor() != pawn.getTeamColor()) {
+                checkForPromotion(board, moves, position, rowDirection, colDirection);
+            } else {
+                helpPawnMoves(board, moves, position, rowDirection, colDirection, null);
             }
-            helpPawnMoves(board, moves, position, forward * offset[0], offset[1], null);
         }
+
         return moves;
     }
 }
