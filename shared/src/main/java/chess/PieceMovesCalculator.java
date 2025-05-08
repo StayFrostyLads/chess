@@ -81,8 +81,11 @@ public class PieceMovesCalculator {
     private Collection<ChessMove> createSlidingPieces(ChessBoard board, ChessPosition startPosition, int[][] directions) {
         List<ChessMove> moves = new ArrayList<>();
         for (var direction : directions) {
-            int row = startPosition.getRow() + direction[0];
-            int col = startPosition.getColumn() + direction[1];
+            int rowDirection = direction[0];
+            int colDirection = direction[1];
+            int row = startPosition.getRow() + rowDirection;
+            int col = startPosition.getColumn() + colDirection;
+
 
             while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
                 if (isEmpty(board, row, col)) {
@@ -112,8 +115,11 @@ public class PieceMovesCalculator {
         List<ChessMove> moves = new ArrayList<>();
 
         for (var direction : directions) {
-            int row = direction[0] + startPosition.getRow();
-            int col = direction[1] + startPosition.getColumn();
+            int rowDirection = direction[0];
+            int colDirection = direction[1];
+            int row = startPosition.getRow() + rowDirection;
+            int col = startPosition.getColumn() + colDirection;
+
             if (isEmpty(board, row, col) || isEnemy(board, startPosition, row, col)) {
                 moves.add(new ChessMove(startPosition, new ChessPosition(row, col), null));
             }
