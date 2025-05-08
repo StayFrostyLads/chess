@@ -20,15 +20,6 @@ public class ChessMove {
     }
 
     /**
-     * Helper constructor that defaults promotionPiece to null.
-     * @param startPosition where the piece started at
-     * @param endPosition where the piece ends at
-     */
-    public ChessMove(ChessPosition startPosition, ChessPosition endPosition) {
-        this(startPosition, endPosition, null);
-    }
-
-    /**
      * @return ChessPosition of starting location
      */
     public ChessPosition getStartPosition() {
