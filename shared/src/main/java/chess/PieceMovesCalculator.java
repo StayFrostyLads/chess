@@ -44,6 +44,33 @@ public class PieceMovesCalculator {
     }
 
     /**
+     * A helper method to determine whether the destination square is empty.
+     * @param board The chess board
+     * @param row The targeted row of the board
+     * @param col The targeted column of the board
+     * @return True if the square defined by (row, col) is empty, false if it is occupied
+     */
+    private boolean isEmpty(ChessBoard board, int row, int col) {
+        return row >= 1 && row <= 8
+                && col >= 1 && col <= 8
+                && board.getPiece(new ChessPosition(row, col)) == null;
+    }
+
+    /**
+     * A helper method to determine whether the destination square is occupied by an enemy.
+     *
+     * @return True if the square defined by (row, col) is occupied by an enemy
+     */
+    private boolean isEnemy(ChessBoard board, ChessPosition piecePosition, int row, int col) {
+        if (row < 1 || row > 8 || col < 1 || col > 8) {
+            return false;
+        }
+        ChessPiece enemy = board.getPiece(new ChessPosition(row, col));
+        ChessPiece piece = board.getPiece(piecePosition);
+        return (enemy != null && enemy.getTeamColor() != piece.getTeamColor());
+    }
+
+    /**
      * The helper method for the moving functionality of the Queen, Bishop, and Rook
      *
      * @param board The chess board
@@ -54,24 +81,21 @@ public class PieceMovesCalculator {
     private Collection<ChessMove> createSlidingPieces(ChessBoard board, ChessPosition startPosition, int[][] directions) {
         List<ChessMove> moves = new ArrayList<>();
         for (var direction : directions) {
-            int rowDirection = direction[0], colDirection = direction[1];
-            int row = startPosition.getRow(), col = startPosition.getColumn();
-            while (true) {
-                row += rowDirection;
-                col += colDirection;
-                if (row < 1 || row > 8 || col < 1 || col > 8) {
-                    break;
-                }
-                ChessPosition endPosition = new ChessPosition(row, col);
-                ChessPiece endSquarePiece = board.getPiece(endPosition);
-                if (endSquarePiece == null) {
-                    moves.add(new ChessMove(startPosition, endPosition, null));
+            int rowDirection = direction[0];
+            int colDirection = direction[1];
+            int row = startPosition.getRow() + rowDirection, col = startPosition.getColumn() + colDirection;
+
+            while (row >= 1 && row <= 8 && col >= 1 && col <= 8) {
+                if (isEmpty(board, row, col)) {
+                    moves.add(new ChessMove(startPosition, new ChessPosition(row, col), null));
                 } else {
-                    if (endSquarePiece.getTeamColor() != board.getPiece(startPosition).getTeamColor()) {
-                        moves.add(new ChessMove(startPosition, endPosition, null));
+                    if (isEnemy(board, startPosition, row, col)) {
+                        moves.add(new ChessMove(startPosition, new ChessPosition(row, col), null));
                     }
                     break;
                 }
+                row += rowDirection;
+                col += colDirection;
             }
         }
         return moves;
@@ -87,18 +111,12 @@ public class PieceMovesCalculator {
      */
     private Collection<ChessMove> createSteppingPieces(ChessBoard board, ChessPosition startPosition, int[][] directions) {
         List<ChessMove> moves = new ArrayList<>();
-        ChessPiece piece = board.getPiece(startPosition);
 
         for (var direction : directions) {
             int row = direction[0] + startPosition.getRow();
             int col = direction[1] + startPosition.getColumn();
-            if (row < 1 || row > 8 || col < 1 || col > 8) {
-                continue;
-            }
-            ChessPosition endPosition = new ChessPosition(row, col);
-            ChessPiece endSquare = board.getPiece(endPosition);
-            if (endSquare == null || endSquare.getTeamColor() != piece.getTeamColor()) {
-                moves.add(new ChessMove(startPosition, endPosition, null));
+            if (isEmpty(board, row, col) || isEnemy(board, startPosition, row, col)) {
+                moves.add(new ChessMove(startPosition, new ChessPosition(row, col), null));
             }
         }
         return moves;
@@ -135,21 +153,16 @@ public class PieceMovesCalculator {
      */
     private void helpPawnMoves(ChessBoard board, List<ChessMove> possibleMoves, ChessPosition startPosition,
                                int rowDirection, int colDirection, ChessPiece.PieceType promotionPiece) {
-        int row = startPosition.getRow() + rowDirection, col = startPosition.getColumn() + colDirection;
-        if (row < 1 || row > 8 || col < 1 || col > 8) {
-            return;
-        }
-        ChessPosition endPosition = new ChessPosition(row, col);
-        ChessPiece endSquarePiece = board.getPiece(endPosition);
-        ChessPiece piece = board.getPiece(startPosition);
+        int row = startPosition.getRow() + rowDirection;
+        int col = startPosition.getColumn() + colDirection;
 
         if (colDirection == 0) {
-            if (endSquarePiece == null) {
-                possibleMoves.add(new ChessMove(startPosition, endPosition, promotionPiece));
+            if (isEmpty(board, row, col)) {
+                possibleMoves.add(new ChessMove(startPosition, new ChessPosition(row, col), promotionPiece));
             }
         } else {
-                if (endSquarePiece != null && endSquarePiece.getTeamColor() != piece.getTeamColor()) {
-                    possibleMoves.add(new ChessMove(startPosition, endPosition, promotionPiece));
+                if (isEnemy(board, startPosition, row, col)) {
+                    possibleMoves.add(new ChessMove(startPosition, new ChessPosition(row, col), promotionPiece));
                 }
             }
     }
@@ -197,8 +210,8 @@ public class PieceMovesCalculator {
         if (position.getRow() == homeRank) {
             int midRow = position.getRow() + forward;
             int midCol = position.getColumn();
-            ChessPosition midPosition = new ChessPosition(midRow, midCol);
-            if (board.getPiece(midPosition) == null) {
+
+            if (isEmpty(board, midRow, midCol)) {
                 helpPawnMoves(board, moves, position, forward*2, 0, null);
             }
         }
