@@ -1,15 +1,11 @@
 package chess;
+
 import java.util.Arrays;
 import java.util.Objects;
 
+import static chess.ChessPiece.*;
 import static chess.ChessGame.TeamColor.*;
 import static chess.ChessPiece.PieceType.*;
-import static chess.ChessPiece.Pawn;
-import static chess.ChessPiece.Rook;
-import static chess.ChessPiece.Bishop;
-import static chess.ChessPiece.Knight;
-import static chess.ChessPiece.King;
-import static chess.ChessPiece.Queen;
 
 
 /**
@@ -19,10 +15,10 @@ import static chess.ChessPiece.Queen;
  * signature of the existing methods.
  */
 public class ChessBoard {
+    private final ChessPiece[][] board = new ChessPiece[8][8];
+    public ChessBoard() {
 
-    private final ChessPiece[][] squares = new ChessPiece[8][8];
-
-    public ChessBoard() {}
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -30,27 +26,12 @@ public class ChessBoard {
             return false;
         }
         ChessBoard that = (ChessBoard) o;
-        return Objects.deepEquals(squares, that.squares);
+        return Objects.deepEquals(board, that.board);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.deepHashCode(squares);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int row = 7; row >= 0; row--) {
-            stringBuilder.append(row+1).append(" ");
-            for (int col = 0; col < 8; col++) {
-                ChessPiece piece = squares[row][col];
-                stringBuilder.append(piece == null ? ". " : piece.toString() + " ");
-            }
-            stringBuilder.append("\n");
-        }
-        stringBuilder.append("  a b c d e f g h");
-        return stringBuilder.toString();
+        return Arrays.deepHashCode(board);
     }
 
     /**
@@ -62,30 +43,10 @@ public class ChessBoard {
     public void addPiece(ChessPosition position, ChessPiece piece) {
         int row = position.getRow()-1;
         int col = position.getColumn()-1;
-        squares[row][col] = piece;
+        board[row][col] = piece;
     }
 
-    /**
-     * Gets a chess piece on the chessboard
-     *
-     * @param position The position to get the piece from
-     * @return Either the piece at the position, or null if no piece is at that
-     * position
-     */
-    public ChessPiece getPiece(ChessPosition position) {
-        int row = position.getRow()-1;
-        int col = position.getColumn()-1;
-        return squares[row][col];
-    }
-
-    /**
-     *
-     * @param piece The desired special chess piece to place on the back row
-     * @param color The desired color of the chess piece
-     * @return piece, color
-     */
-
-    private ChessPiece makePiece(ChessPiece.PieceType piece, ChessGame.TeamColor color) {
+    public ChessPiece makePiece(ChessPiece.PieceType piece, ChessGame.TeamColor color) {
         return switch (piece) {
             case PAWN -> new Pawn(color);
             case ROOK -> new Rook(color);
@@ -97,26 +58,42 @@ public class ChessBoard {
     }
 
     /**
+     * Gets a chess piece on the chessboard
+     *
+     * @param position The position to get the piece from
+     * @return Either the piece at the position, or null if no piece is at that
+     * position
+     */
+    public ChessPiece getPiece(ChessPosition position) {
+        int row = position.getRow() -1 ;
+        int col = position.getColumn() -1 ;
+        return board[row][col];
+    }
+
+    /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                squares[row][col] = null;
+                board[row][col] = null;
             }
         }
 
-        for (int col = 1; col <= 8; col++) {
+        for (int col = 1; col < 9; col++) {
             addPiece(new ChessPosition(2, col), makePiece(PAWN, WHITE));
             addPiece(new ChessPosition(7, col), makePiece(PAWN, BLACK));
         }
-        ChessPiece.PieceType [] backRank = { ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK };
-        for (int col = 1; col <= 8; col++) {
+
+        ChessPiece.PieceType[] backRank = { ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK };
+        for (int col = 1; col < 9; col++) {
             addPiece(new ChessPosition(1, col), makePiece(backRank[col-1], WHITE));
             addPiece(new ChessPosition(8, col), makePiece(backRank[col-1], BLACK));
         }
     }
 
+
 }
+
+

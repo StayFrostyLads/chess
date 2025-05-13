@@ -5,6 +5,13 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
     </content>
+    <content url="file://$MODULE_DIR$/../starter-code">
+      <sourceFolder url="file://$MODULE_DIR$/../starter-code/1-chess-game" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../starter-code/3-web-api" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../starter-code/4-database" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../starter-code/5-pregame" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../starter-code/6-gameplay" isTestSource="false" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="shared" />
