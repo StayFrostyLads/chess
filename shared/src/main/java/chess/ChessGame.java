@@ -1,6 +1,8 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -46,6 +48,20 @@ public class ChessGame {
     }
 
     /**
+     *
+     * @param original The original board to be copied
+     * @param copy The deep copy of the board
+     */
+    private void cloneBoard(ChessBoard original, ChessBoard copy) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                copy.addPiece(position, original.getPiece(position));
+            }
+        }
+    }
+
+    /**
      * Gets a valid moves for a piece at the given location
      *
      * @param startPosition the piece to get valid moves for
@@ -55,7 +71,20 @@ public class ChessGame {
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
         if (piece == null) return null;
-        return piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
+        List<ChessMove> legalMoves = new ArrayList<>();
+        for (ChessMove move : possibleMoves) {
+            ChessBoard copy = new ChessBoard();
+            cloneBoard(board, copy);
+            copy.addPiece(move.getEndPosition(), board.getPiece(startPosition));
+            copy.addPiece(startPosition, null);
+            ChessGame trial = new ChessGame();
+            trial.setBoard(copy);
+            if (!trial.isInCheck(team)) {
+                legalMoves.add(move);
+            }
+        }
+        return legalMoves;
     }
 
     /**
