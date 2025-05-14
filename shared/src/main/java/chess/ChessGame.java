@@ -71,6 +71,7 @@ public class ChessGame {
     }
 
     /**
+     * Deep clone helper
      *
      * @param original The original board to be copied
      * @param copy The deep copy of the board
@@ -118,8 +119,33 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-//        team = team.other();
-//        setTeamTurn(team);
+        ChessPiece piece = board.getPiece(move.getStartPosition());
+        if (piece == null) {
+            throw new InvalidMoveException("There is no piece located at: " + move.getStartPosition());
+        }
+        if (piece.getTeamColor() != team) {
+            throw new InvalidMoveException("It is not currently " + team + "'s turn");
+        }
+        Collection<ChessMove> legalMoves = validMoves(move.getStartPosition());
+        if (legalMoves == null || !legalMoves.contains(move)) {
+            throw new InvalidMoveException("Your move: " + move + " is not legal!");
+        }
+/*     En passant
+        boolean isPawn = piece.getPieceType() == ChessPiece.PieceType.PAWN;
+        int startRow = move.getStartPosition().getRow();
+        int startCol = move.getStartPosition().getColumn();
+        int endRow = move.getEndPosition().getRow();
+        int endCol = move.getEndPosition().getColumn();
+*/
+        board.addPiece(move.getStartPosition(), null);
+
+        if (move.getPromotionPiece() != null) {
+            board.addPiece(move.getEndPosition(), board.makePiece(move.getPromotionPiece(), piece.getTeamColor()));
+        } else {
+            board.addPiece(move.getEndPosition(), piece);
+        }
+
+        team = team.other();
     }
 
     private ChessPosition findKingPosition(TeamColor teamColor) {
