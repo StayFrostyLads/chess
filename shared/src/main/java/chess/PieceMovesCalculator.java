@@ -10,32 +10,32 @@ import static chess.ChessPiece.PieceType.*;
 
 public class PieceMovesCalculator {
 
-    private final List<ChessPiece.PieceType> PROMOTION_OPTIONS =
+    private static final List<ChessPiece.PieceType> PROMOTION_OPTIONS =
             List.of(ROOK, KNIGHT, BISHOP, QUEEN);
 
-    private final int[][] PAWN_MOVE_OFFSET = {
+    private static final int[][] PAWN_MOVE_OFFSET = {
             {1, 1}, {1, -1}
     };
 
-    private final int[][] ROOK_DIRECTION = {
+    private static final int[][] ROOK_DIRECTION = {
             {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
 
-    private final int[][] BISHOP_DIRECTION = {
+    private static final int[][] BISHOP_DIRECTION = {
             {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
     };
 
-    private final int[][] QUEEN_DIRECTION = {
+    private static final int[][] QUEEN_DIRECTION = {
             {1, 1}, {1, -1}, {-1, 1}, {-1, -1},
             {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
 
-    private final int[][] KING_DIRECTION = {
+    private static final int[][] KING_DIRECTION = {
             {1, 1}, {1, -1}, {-1, 1}, {-1, -1},
             {1, 0}, {-1, 0}, {0, 1}, {0, -1}
     };
 
-    private final int[][] KNIGHT_DIRECTION = {
+    private static final int[][] KNIGHT_DIRECTION = {
             {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
             {1, 2}, {-1, 2}, {1, -2}, {-1, -2}
     };

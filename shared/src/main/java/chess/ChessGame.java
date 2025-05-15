@@ -94,7 +94,9 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null) return null;
+        if (piece == null) {
+            return null;
+        }
         Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
         TeamColor color = piece.getTeamColor();
         List<ChessMove> legalMoves = new ArrayList<>();
