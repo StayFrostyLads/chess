@@ -1,8 +1,8 @@
-import server.Server;
+package server;
 
 public class Main {
     public static void main(String[] args) {
         Server testServer = new Server();
-        int testPort = testServer.run(8080);
+        testServer.run(8080);
     }
 }
