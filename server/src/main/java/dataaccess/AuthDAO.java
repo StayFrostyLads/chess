@@ -9,4 +9,5 @@ public interface AuthDAO {
     AuthData createAuth(String username) throws DataAccessException;
     Optional<AuthData> getAuth(String authToken);
     List<AuthData> findAll();
+    boolean removeToken(String authToken) throws DataAccessException;
 }

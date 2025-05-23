@@ -39,8 +39,8 @@ class ClearTest {
         ClearRequest req = new ClearRequest();
         ClearResult res = clearService.clear(req);
 
-        assertTrue(res.isSuccess());
-        assertEquals("Database successfully cleared!", res.getMessage());
+        assertTrue(res.success());
+        assertEquals("Database successfully cleared!", res.message());
 
         assertTrue(authDAO.findAll().isEmpty(), "AuthDAO should be empty!");
         assertTrue(gameDAO.listGames().isEmpty(), "GameDAO should be empty!");
@@ -75,6 +75,11 @@ class ClearTest {
             @Override
             public List<AuthData> findAll() {
                 return List.of();
+            }
+
+            @Override
+            public boolean removeToken(String token) throws DataAccessException {
+                return false;
             }
         };
 

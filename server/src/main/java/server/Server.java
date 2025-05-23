@@ -8,6 +8,7 @@ import dataaccess.implementation.InMemoryAuthDAO;
 import dataaccess.implementation.InMemoryGameDAO;
 import dataaccess.implementation.InMemoryUserDAO;
 import handler.*;
+import json.JsonUtil;
 import service.*;
 import spark.*;
 
@@ -27,7 +28,7 @@ public class Server {
             ClearRequest.class
     );
 
-    RegisterService registerService = new RegisterService(userDAO);
+    RegisterService registerService = new RegisterService(userDAO, authDAO);
     BaseHandler<RegisterRequest, RegisterResult> registerHandler = new BaseHandler<>(
             registerService::register,
             RegisterRequest.class
@@ -39,6 +40,8 @@ public class Server {
             LoginRequest.class
     );
 
+    LogoutService logoutService = new LogoutService(authDAO);
+
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
@@ -47,7 +50,18 @@ public class Server {
         Spark.post("/user", registerHandler::handleRequest);
         Spark.post("/session", loginHandler::handleRequest);
 
-//        Spark.delete("/session", logoutHandler::handleRequest);
+        Spark.delete("/session", (request, response) -> {
+            String token = request.headers("authorization");
+
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken " + token);
+            }
+
+            LogoutResult result = logoutService.logout(new LogoutRequest(token));
+            response.type("application/json");
+            return JsonUtil.toJson(result);
+        });
+
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
 

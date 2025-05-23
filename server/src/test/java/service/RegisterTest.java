@@ -12,12 +12,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RegisterTest {
 
     private UserDAO userDAO;
+    private AuthDAO authDAO;
     private RegisterService registerService;
 
     @BeforeEach
     public void setup() {
         userDAO = new InMemoryUserDAO();
-        registerService = new RegisterService(userDAO);
+        registerService = new RegisterService(userDAO, authDAO);
     }
 
     @Test

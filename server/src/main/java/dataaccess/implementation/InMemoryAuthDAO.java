@@ -29,4 +29,9 @@ public class InMemoryAuthDAO implements AuthDAO {
     public List<AuthData> findAll() {
         return new ArrayList<>(store.values());
     }
+
+    @Override
+    public boolean removeToken(String authToken) {
+        return store.remove(authToken) != null;
+    }
 }

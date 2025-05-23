@@ -1,19 +1,22 @@
 package service;
 
 import dataaccess.*;
+import model.AuthData;
 import model.UserData;
 import java.util.UUID;
 
 public class RegisterService {
-    private final UserDAO userDao;
+    private final UserDAO userDAO;
+    private final AuthDAO authDAO;
 
-    public RegisterService(UserDAO userDAO) {
-        this.userDao = userDAO;
+    public RegisterService(UserDAO userDAO, AuthDAO authDAO) {
+        this.userDAO = userDAO;
+        this.authDAO = authDAO;
     }
 
     public RegisterResult register(RegisterRequest request) {
         try {
-            if (userDao.getUser(request.username()).isPresent()) {
+            if (userDAO.getUser(request.username()).isPresent()) {
                 throw new AlreadyTakenException("The username '" + request.username() + "' is already taken");
             }
 
@@ -22,11 +25,11 @@ public class RegisterService {
                 request.email()
         );
 
-        userDao.createUser(newUser);
+        userDAO.createUser(newUser);
 
-        String authToken = UUID.randomUUID().toString();
+            String authToken = authDAO.createAuth(request.username()).authToken();
 
-        return new RegisterResult(authToken, request.username());
+            return new RegisterResult(authToken, request.username());
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during registration", e);
         }
