@@ -8,6 +8,7 @@ import org.junit.jupiter.api.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,7 +64,8 @@ class ClearTest {
             }
 
             @Override
-            public void createAuth(AuthData auth) { }
+            public AuthData createAuth(String username) {
+                return new AuthData(UUID.randomUUID().toString(), username); }
 
             @Override
             public Optional<AuthData> getAuth(String authToken) {
