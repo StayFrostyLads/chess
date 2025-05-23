@@ -3,7 +3,6 @@ package service;
 import dataaccess.*;
 import dataaccess.implementation.*;
 import model.*;
-import org.eclipse.jetty.util.log.Log;
 import org.junit.jupiter.api.*;
 
 import java.util.*;

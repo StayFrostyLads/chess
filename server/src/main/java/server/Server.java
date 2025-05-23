@@ -40,11 +40,15 @@ public class Server {
     );
 
     LogoutService logoutService = new LogoutService(authDAO);
-    ListGamesService listGamesService = new ListGamesService(gameDAO);
+
+    ListGamesService listGamesService = new ListGamesService(authDAO, gameDAO);
     BaseHandler<ListGamesRequest, ListGamesResult> listGamesHandler = new BaseHandler<>(
             listGamesService::listGames,
             ListGamesRequest.class
     );
+
+
+
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
