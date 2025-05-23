@@ -28,7 +28,7 @@ public class LoginTest {
 
     @Test
     @DisplayName("Successful Login")
-    public void loginSuccessfully() {
+    public void loginSuccessfully() throws DataAccessException {
         LoginRequest req = new LoginRequest("jack",
                 "cs240test"
         );

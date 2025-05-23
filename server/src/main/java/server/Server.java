@@ -1,14 +1,11 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
-import dataaccess.UserDAO;
-import dataaccess.implementation.InMemoryAuthDAO;
-import dataaccess.implementation.InMemoryGameDAO;
-import dataaccess.implementation.InMemoryUserDAO;
+import dataaccess.*;
+import dataaccess.implementation.*;
 import handler.*;
 import json.JsonUtil;
+import model.AuthData;
 import service.*;
 import spark.*;
 
@@ -43,13 +40,11 @@ public class Server {
     );
 
     LogoutService logoutService = new LogoutService(authDAO);
-    BaseHandler<LogoutRequest, LogoutResult> logoutHandler = new BaseHandler<>(
-            logoutService::logout,
-            LogoutRequest.class
+    ListGamesService listGamesService = new ListGamesService(gameDAO);
+    BaseHandler<ListGamesRequest, ListGamesResult> listGamesHandler = new BaseHandler<>(
+            listGamesService::listGames,
+            ListGamesRequest.class
     );
-
-    ListGamesService listGamesService = new ListGamesService(authDAO, gameDAO);
-
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
@@ -64,20 +59,26 @@ public class Server {
             if (method.equals("DELETE") && (path.equals("/db"))) {
                 return;
             }
-
             String token = request.headers("authorization");
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken " + token);
-            }
-            authService.validate(token);
+            AuthData auth = authService.validate(token);
+            request.attribute("auth", auth);
         });
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", registerHandler::handleRequest);
         Spark.post("/session", loginHandler::handleRequest);
 
-        Spark.delete("/session", logoutHandler::handleRequest);
+        Spark.delete("/session", (request, response) -> {
+            String token = request.headers("authorization");
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken " + token);
+            }
 
+            LogoutResult result = logoutService.logout(new LogoutRequest(token));
+            response.type("application/json");
+            return JsonUtil.toJson(result);
+        });
+        Spark.get("/game", listGamesHandler::handleRequest);
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
 

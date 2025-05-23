@@ -25,7 +25,7 @@ public class LogoutTest {
 
     @Test
     @DisplayName("Successful Logout")
-    public void logoutSuccessfully() {
+    public void logoutSuccessfully() throws DataAccessException {
         LogoutRequest request = new LogoutRequest(validToken);
         LogoutResult result = logoutService.logout(request);
         assertTrue(result.success());
