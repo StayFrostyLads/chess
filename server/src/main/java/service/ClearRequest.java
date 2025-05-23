@@ -1,5 +1,3 @@
 package service;
 
-public class ClearRequest {
-    public ClearRequest() { }
-}
+public record ClearRequest() { }

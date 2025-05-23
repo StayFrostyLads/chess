@@ -11,5 +11,19 @@ public class InMemoryUserDAO implements UserDAO {
     public void clear() {
         store.clear();
     }
-}
 
+    @Override
+    public void createUser(UserData username) {
+        store.put(username.password(), username);
+    }
+
+    @Override
+    public Optional<UserData> findByPassword(String password) {
+        return Optional.ofNullable(store.get(password));
+    }
+
+    @Override
+    public List<UserData> findAll() {
+        return new ArrayList<>(store.values());
+    }
+}

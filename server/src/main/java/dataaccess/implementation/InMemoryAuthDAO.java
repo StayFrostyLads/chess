@@ -11,4 +11,19 @@ public class InMemoryAuthDAO implements AuthDAO {
     public void clear() {
         store.clear();
     }
+
+    @Override
+    public void insert(AuthData auth) {
+        store.put(auth.authToken(), auth);
+    }
+
+    @Override
+    public Optional<AuthData> findByToken(String authToken) {
+        return Optional.ofNullable(store.get(authToken));
+    }
+
+    @Override
+    public List<AuthData> findAll() {
+        return new ArrayList<>(store.values());
+    }
 }
