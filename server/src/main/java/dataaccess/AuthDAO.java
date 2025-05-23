@@ -1,11 +1,12 @@
 package dataaccess;
 
 import model.AuthData;
+
 import java.util.*;
 
 public interface AuthDAO {
     void clear();
-    void insert(AuthData auth) throws DataAccessException;
-    Optional<AuthData> findByToken(String authToken);
+    AuthData createAuth(String username) throws DataAccessException;
+    Optional<AuthData> getAuth(String authToken);
     List<AuthData> findAll();
 }

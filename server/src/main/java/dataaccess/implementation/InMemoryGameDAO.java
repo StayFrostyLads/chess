@@ -13,7 +13,7 @@ public class InMemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public void insert(GameData game) {
+    public void createGame(GameData game) {
         store.put(game.gameID(), game);
     }
 

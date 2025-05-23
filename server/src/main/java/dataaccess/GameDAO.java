@@ -5,7 +5,7 @@ import java.util.*;
 
 public interface GameDAO {
     void clear();
-    void insert(GameData game) throws DataAccessException;
+    void createGame(GameData game) throws DataAccessException;
     Optional<GameData> findByGameId(int gameID);
     List<GameData> findAll();
 }

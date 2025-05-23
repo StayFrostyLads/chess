@@ -13,12 +13,15 @@ public class InMemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public void insert(AuthData auth) {
-        store.put(auth.authToken(), auth);
+    public AuthData createAuth(String username) {
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, username);
+        store.put(authToken, auth);
+        return auth;
     }
 
     @Override
-    public Optional<AuthData> findByToken(String authToken) {
+    public Optional<AuthData> getAuth(String authToken) {
         return Optional.ofNullable(store.get(authToken));
     }
 

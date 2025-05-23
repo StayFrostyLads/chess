@@ -26,8 +26,8 @@ class ClearTest {
         userDAO = new InMemoryUserDAO();
         clearService = new ClearService(authDAO, gameDAO, userDAO);
 
-        authDAO.insert(new AuthData("testToken", "Jack"));
-        gameDAO.insert(new GameData(1234, "Jack",
+        authDAO.createAuth( "Jack");
+        gameDAO.createGame(new GameData(1234, "Jack",
                       "Liv", "test", new ChessGame()));
         userDAO.createUser(new UserData("Jack", "cs240test", "jneb2004@byu.edu"));
     }
@@ -63,10 +63,10 @@ class ClearTest {
             }
 
             @Override
-            public void insert(AuthData auth) { }
+            public void createAuth(AuthData auth) { }
 
             @Override
-            public Optional<AuthData> findByToken(String authToken) {
+            public Optional<AuthData> getAuth(String authToken) {
                 return Optional.empty();
             }
 
