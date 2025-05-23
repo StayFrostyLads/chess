@@ -24,11 +24,11 @@ public class RegisterTest {
     @Test
     @DisplayName("Successful New User Registration")
     public void registerSuccessfully() throws DataAccessException {
-        RegisterRequest req = new RegisterRequest("jack",
+        RegisterService.Request req = new RegisterService.Request("jack",
                                                 "cs240test",
                                                 "jneb2004.byu.edu"
         );
-        RegisterResult result = registerService.register(req);
+        RegisterService.Result result = registerService.register(req);
 
         assertNotNull(result.authToken(), "Auth token was not generated correctly");
         assertEquals("jack", result.username());
@@ -52,7 +52,7 @@ public class RegisterTest {
         );
         userDAO.createUser(existingUser);
 
-        RegisterRequest request = new RegisterRequest("liv",
+        RegisterService.Request request = new RegisterService.Request("liv",
                                             "golf",
                                                 "goo@yahoo.com"
         );

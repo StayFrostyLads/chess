@@ -9,17 +9,19 @@ public class LogoutService {
         this.authDao = authDao;
     }
 
-    public LogoutResult logout(LogoutRequest request) {
+    public Result logout(Request request) {
         try {
             boolean removed = authDao.removeToken(request.authToken());
             if (!removed) {
                 throw new AuthenticationException("Invalid auth token: " + request.authToken());
             }
-            return new LogoutResult(true, "User successfully logged out");
+            return new Result(true, "User successfully logged out");
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during registration", e);
         }
 
     }
 
+    public static record Request(String authToken) { }
+    public static record Result(boolean success, String message) { }
 }

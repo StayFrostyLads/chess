@@ -22,31 +22,36 @@ public class Server {
     AuthService authService = new AuthService(authDAO);
 
     ClearService clearService = new ClearService(authDAO, gameDAO, userDAO);
-    BaseHandler<ClearRequest, ClearResult> clearHandler = new BaseHandler<>(
-            clearService::clear,
-            ClearRequest.class
+    BaseHandler<ClearService.Request, ClearService.Result> clearHandler = new BaseHandler<>(
+            request -> clearService.clear(),
+            ClearService.Request.class
     );
 
     RegisterService registerService = new RegisterService(userDAO, authDAO);
-    BaseHandler<RegisterRequest, RegisterResult> registerHandler = new BaseHandler<>(
+    BaseHandler<RegisterService.Request, RegisterService.Result> registerHandler = new BaseHandler<>(
             registerService::register,
-            RegisterRequest.class
+            RegisterService.Request.class
     );
 
     LoginService loginService = new LoginService(userDAO, authDAO);
-    BaseHandler<LoginRequest, LoginResult> loginHandler = new BaseHandler<>(
+    BaseHandler<LoginService.Request, LoginService.Result> loginHandler = new BaseHandler<>(
             loginService::login,
-            LoginRequest.class
+            LoginService.Request.class
     );
 
     LogoutService logoutService = new LogoutService(authDAO);
 
     ListGamesService listGamesService = new ListGamesService(authDAO, gameDAO);
-    BaseHandler<ListGamesRequest, ListGamesResult> listGamesHandler = new BaseHandler<>(
+    BaseHandler<ListGamesService.Request, ListGamesService.Result> listGamesHandler = new BaseHandler<>(
             listGamesService::listGames,
-            ListGamesRequest.class
+            ListGamesService.Request.class
     );
 
+    CreateGameService createGameService = new CreateGameService(authDAO, gameDAO);
+    BaseHandler<CreateGameService.Request, CreateGameService.Result> createGameHandler = new BaseHandler<>(
+            createGameService::createGame,
+            CreateGameService.Request.class
+    );
 
 
     public int run(int desiredPort) {
@@ -78,11 +83,37 @@ public class Server {
                 throw new AuthenticationException("Missing authToken " + token);
             }
 
-            LogoutResult result = logoutService.logout(new LogoutRequest(token));
+            LogoutService.Result result = logoutService.logout(new LogoutService.Request(token));
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
-        Spark.get("/game", listGamesHandler::handleRequest);
+        Spark.get("/game", (request, response) -> {
+            String token = request.headers("authorization");
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken " + token);
+            }
+
+            ListGamesService.Result result = listGamesService.listGames(new ListGamesService.Request(token));
+            response.type("application/json");
+            return JsonUtil.toJson(result);
+        });
+        Spark.post("/game", (request, response) -> {
+            String token = request.headers("authorization");
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken " + token);
+            }
+
+            var bodyRequest = JsonUtil.fromJson(request.body(), CreateGameService.Request.class);
+            if (bodyRequest == null || bodyRequest.gameName() == null || bodyRequest.gameName().isBlank()) {
+                throw new BadRequestException("Missing or empty gameName");
+            }
+
+            var fullRequest = new CreateGameService.Request(token, bodyRequest.gameName());
+
+            CreateGameService.Result result = createGameService.createGame(fullRequest);
+            response.type("application/json");
+            return JsonUtil.toJson(result);
+        });
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
 
@@ -121,6 +152,8 @@ public class Server {
             statusCode = 401;
         } else if (e instanceof ServerException) {
             statusCode = 500;
+        } else if (e instanceof BadRequestException) {
+            statusCode = 400;
         } else {
             statusCode = 500;
         }

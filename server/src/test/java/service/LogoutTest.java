@@ -26,8 +26,8 @@ public class LogoutTest {
     @Test
     @DisplayName("Successful Logout")
     public void logoutSuccessfully() throws DataAccessException {
-        LogoutRequest request = new LogoutRequest(validToken);
-        LogoutResult result = logoutService.logout(request);
+        LogoutService.Request request = new LogoutService.Request(validToken);
+        LogoutService.Result result = logoutService.logout(request);
         assertTrue(result.success());
         assertTrue(authDAO.getAuth(validToken).isEmpty());
     }
@@ -37,7 +37,7 @@ public class LogoutTest {
     void logoutWrongToken() {
         assertThrows(
                 AuthenticationException.class,
-                () -> logoutService.logout(new LogoutRequest("some-invalid-token"))
+                () -> logoutService.logout(new LogoutService.Request("some-invalid-token"))
         );
     }
 

@@ -14,7 +14,7 @@ public class RegisterService {
         this.authDAO = authDAO;
     }
 
-    public RegisterResult register(RegisterRequest request) {
+    public Result register(Request request) {
         try {
             if (userDAO.getUser(request.username()).isPresent()) {
                 throw new AlreadyTakenException("The username '" + request.username() + "' is already taken");
@@ -29,7 +29,7 @@ public class RegisterService {
 
             String authToken = authDAO.createAuth(request.username()).authToken();
 
-            return new RegisterResult(authToken, request.username());
+            return new Result(authToken, request.username());
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during registration", e);
         }
@@ -39,4 +39,6 @@ public class RegisterService {
         return Integer.toHexString(plain.hashCode()); 
     }
 
+    public record Result(String authToken, String username) { }
+    public record Request(String username, String password, String email) { }
 }

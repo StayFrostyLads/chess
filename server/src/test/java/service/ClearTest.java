@@ -28,7 +28,7 @@ class ClearTest {
         clearService = new ClearService(authDAO, gameDAO, userDAO);
 
         authDAO.createAuth( "Jack");
-        gameDAO.createGame(new GameData(1234, "Jack",
+        gameDAO.addGame(new GameData(1234, "Jack",
                       "Liv", "test", new ChessGame()));
         userDAO.createUser(new UserData("Jack", "cs240test", "jneb2004@byu.edu"));
     }
@@ -36,8 +36,7 @@ class ClearTest {
     @Test
     @DisplayName("Successful Clear")
     public void clearSuccessfully() {
-        ClearRequest req = new ClearRequest();
-        ClearResult res = clearService.clear(req);
+        ClearService.Result res = clearService.clear();
 
         assertTrue(res.success());
         assertEquals("Database successfully cleared!", res.message());
@@ -87,7 +86,7 @@ class ClearTest {
                                                     new InMemoryGameDAO(),
                                                     new InMemoryUserDAO());
         assertThrows(ClearFailedException.class,
-                    () -> testService.clear(new ClearRequest()),
+                testService::clear,
                 "Expected a ClearFailedException error when DAO.clear() fails");
     }
 }

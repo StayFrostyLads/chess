@@ -27,8 +27,8 @@ public class ListGamesTest {
     @Test
     @DisplayName("Empty game list correctly displays no games")
     void listGamesEmpty() {
-        ListGamesRequest request = new ListGamesRequest(validToken);
-        ListGamesResult result = gamesService.listGames(request);
+        ListGamesService.Request request = new ListGamesService.Request(validToken);
+        ListGamesService.Result result = gamesService.listGames(request);
 
         assertNotNull(result.games(), "games() should not return as null");
         assertEquals(0, result.games().length,
@@ -45,8 +45,8 @@ public class ListGamesTest {
         gameDAO.createGame(game1);
         gameDAO.createGame(game2);
 
-        ListGamesRequest request = new ListGamesRequest(validToken);
-        ListGamesResult result = gamesService.listGames(request);
+        ListGamesService.Request request = new ListGamesService.Request(validToken);
+        ListGamesService.Result result = gamesService.listGames(request);
         GameEntry[] entries = result.games();
 
         assertEquals(2, entries.length, "There were not 2 games properly created");
@@ -63,7 +63,7 @@ public class ListGamesTest {
     @Test
     @DisplayName("Missing token throws an AuthenticationException")
     void listGamesMissingToken() {
-        ListGamesRequest request = new ListGamesRequest(null);
+        ListGamesService.Request request = new ListGamesService.Request(null);
         assertThrows(AuthenticationException.class, () -> gamesService.listGames(request),
                 "Expected AuthenticationException when authToken is missing"
                 );
@@ -72,7 +72,7 @@ public class ListGamesTest {
     @Test
     @DisplayName("Invalid token throws an AuthenticationException")
     void listGamesInvalidToken() {
-        ListGamesRequest request = new ListGamesRequest("fake-token-haha");
+        ListGamesService.Request request = new ListGamesService.Request("fake-token-haha");
         assertThrows(AuthenticationException.class, () -> gamesService.listGames(request),
                 "Expected AuthenticationException when authToken is invalid"
         );

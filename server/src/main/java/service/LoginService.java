@@ -14,7 +14,7 @@ public class LoginService {
         this.authDao = authDao;
     }
 
-    public LoginResult login(LoginRequest request) {
+    public Result login(Request request) {
         try {
             Optional<UserData> possibleUser = userDao.getUser(request.username());
             if (possibleUser.isEmpty()) {
@@ -29,7 +29,7 @@ public class LoginService {
 
             AuthData auth = authDao.createAuth(user.username());
 
-            return new LoginResult(auth.authToken(), user.username());
+            return new Result(auth.authToken(), user.username());
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during registration", e);
         }
@@ -39,4 +39,6 @@ public class LoginService {
         return Integer.toHexString(plain.hashCode());
     }
 
+    public record Result(String authToken, String username) { }
+    public record Request(String username, String password) { }
 }

@@ -28,10 +28,10 @@ public class LoginTest {
     @Test
     @DisplayName("Successful Login")
     public void loginSuccessfully() throws DataAccessException {
-        LoginRequest req = new LoginRequest("jack",
+        LoginService.Request req = new LoginService.Request("jack",
                 "cs240test"
         );
-        LoginResult result = loginService.login(req);
+        LoginService.Result result = loginService.login(req);
 
         assertNotNull(result.authToken(), "Auth token was not generated correctly");
         assertEquals("jack", result.username());
@@ -44,7 +44,7 @@ public class LoginTest {
     @Test
     @DisplayName("Wrong password throws AuthenticationException")
     public void loginWrongPassword() throws AuthenticationException {
-        LoginRequest request = new LoginRequest("jack", "wrongpassword");
+        LoginService.Request request = new LoginService.Request("jack", "wrongpassword");
         assertThrows(AuthenticationException.class, () -> loginService.login(request),
                 "AuthenticationException was not properly thrown for a wrong password"
         );
@@ -53,7 +53,7 @@ public class LoginTest {
     @Test
     @DisplayName("Invalid username throws AuthenticationException")
     public void loginInvalidUser() throws AuthenticationException {
-        LoginRequest request = new LoginRequest("liv", "volleyball");
+        LoginService.Request request = new LoginService.Request("liv", "volleyball");
         assertThrows(AuthenticationException.class, () -> loginService.login(request),
                 "AuthenticationException was not properly thrown for a non-existing user"
         );

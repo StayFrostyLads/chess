@@ -1,8 +1,6 @@
 package service;
 
-import dataaccess.AuthDAO;
-import dataaccess.GameDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 
 public class ClearService {
     private final AuthDAO authDao;
@@ -15,7 +13,7 @@ public class ClearService {
         this.userDao = userDAO;
     }
 
-    public ClearResult clear(ClearRequest req) {
+    public Result clear() {
         try {
             authDao.clear();
             gameDao.clear();
@@ -23,7 +21,10 @@ public class ClearService {
         } catch (Exception e) {
             throw new ClearFailedException("Could not clear the database", e);
         }
-        return new ClearResult(true, "Database successfully cleared!");
+        return new Result(true, "Database successfully cleared!");
     }
+
+    public record Result(boolean success, String message) { }
+    public record Request() { }
 
 }
