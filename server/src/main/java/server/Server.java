@@ -33,13 +33,21 @@ public class Server {
             RegisterRequest.class
     );
 
+    LoginService loginService = new LoginService(userDAO, authDAO);
+    BaseHandler<LoginRequest, LoginResult> loginHandler = new BaseHandler<>(
+            loginService::login,
+            LoginRequest.class
+    );
+
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
 
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", registerHandler::handleRequest);
+        Spark.post("/session", loginHandler::handleRequest);
 
+//        Spark.delete("/session", logoutHandler::handleRequest);
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
 
@@ -74,6 +82,8 @@ public class Server {
         int statusCode;
         if (e instanceof AlreadyTakenException) {
             statusCode = 403;
+        } else if (e instanceof AuthenticationException) {
+            statusCode = 401;
         } else if (e instanceof ServerException) {
             statusCode = 500;
         } else {

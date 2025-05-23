@@ -18,12 +18,12 @@ public class InMemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public Optional<GameData> findByGameId(int gameID) {
+    public Optional<GameData> getGame(int gameID) {
         return Optional.ofNullable(store.get(gameID));
     }
 
     @Override
-    public List<GameData> findAll() {
+    public List<GameData> listGames() {
         return new ArrayList<>(store.values());
     }
 }

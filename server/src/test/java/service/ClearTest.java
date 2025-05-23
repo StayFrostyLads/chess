@@ -43,7 +43,7 @@ class ClearTest {
         assertEquals("Database successfully cleared!", res.getMessage());
 
         assertTrue(authDAO.findAll().isEmpty(), "AuthDAO should be empty!");
-        assertTrue(gameDAO.findAll().isEmpty(), "GameDAO should be empty!");
+        assertTrue(gameDAO.listGames().isEmpty(), "GameDAO should be empty!");
         assertTrue(userDAO.findAll().isEmpty(), "UserDAO should be empty!");
     }
 

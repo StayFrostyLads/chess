@@ -6,6 +6,6 @@ import java.util.*;
 public interface GameDAO {
     void clear();
     void createGame(GameData game) throws DataAccessException;
-    Optional<GameData> findByGameId(int gameID);
-    List<GameData> findAll();
+    Optional<GameData> getGame(int gameID);
+    List<GameData> listGames();
 }
