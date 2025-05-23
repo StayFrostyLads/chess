@@ -22,6 +22,8 @@ public class Server {
     GameDAO gameDAO = new InMemoryGameDAO();
     UserDAO userDAO = new InMemoryUserDAO();
 
+    AuthService authService = new AuthService(authDAO);
+
     ClearService clearService = new ClearService(authDAO, gameDAO, userDAO);
     BaseHandler<ClearRequest, ClearResult> clearHandler = new BaseHandler<>(
             clearService::clear,
@@ -41,26 +43,40 @@ public class Server {
     );
 
     LogoutService logoutService = new LogoutService(authDAO);
+    BaseHandler<LogoutRequest, LogoutResult> logoutHandler = new BaseHandler<>(
+            logoutService::logout,
+            LogoutRequest.class
+    );
+
+    ListGamesService listGamesService = new ListGamesService(authDAO, gameDAO);
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
 
+        Spark.before((request, response) -> {
+            String path = request.pathInfo();
+            String method = request.requestMethod();
+
+            if (method.equals("POST") && (path.equals("/user") || (path.equals("/session")))) {
+                return;
+            }
+            if (method.equals("DELETE") && (path.equals("/db"))) {
+                return;
+            }
+
+            String token = request.headers("authorization");
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken " + token);
+            }
+            authService.validate(token);
+        });
+
         // Register your endpoints and handle exceptions here.
         Spark.post("/user", registerHandler::handleRequest);
         Spark.post("/session", loginHandler::handleRequest);
 
-        Spark.delete("/session", (request, response) -> {
-            String token = request.headers("authorization");
-
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken " + token);
-            }
-
-            LogoutResult result = logoutService.logout(new LogoutRequest(token));
-            response.type("application/json");
-            return JsonUtil.toJson(result);
-        });
+        Spark.delete("/session", logoutHandler::handleRequest);
 
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
