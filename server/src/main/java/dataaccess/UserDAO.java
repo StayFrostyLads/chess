@@ -5,7 +5,7 @@ import java.util.*;
 
 public interface UserDAO {
     void clear();
-    void createUser(UserData username) throws DataAccessException;
-    Optional<UserData> findByPassword(String password);
+    void createUser(UserData user) throws DataAccessException;
+    Optional<UserData> getUser(String username) throws DataAccessException;
     List<UserData> findAll();
 }
