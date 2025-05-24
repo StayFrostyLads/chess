@@ -4,15 +4,16 @@ import json.JsonUtil;
 import spark.*;
 import java.util.function.Function;
 
-public class BaseHandler<Req, Res> {
-    private final Function<Req, Res> serviceFunction;
-    private final Class<Req> requestClass;
+// Q is request, A is response
+public class BaseHandler<Q, A> {
+    private final Function<Q, A> serviceFunction;
+    private final Class<Q> requestClass;
 
     /**
      * @param serviceFunction takes in a Request and returns a Response
      * @param requestClass Class token for JSON deserialization
      */
-    public BaseHandler(Function<Req, Res> serviceFunction, Class<Req> requestClass) {
+    public BaseHandler(Function<Q, A> serviceFunction, Class<Q> requestClass) {
         this.serviceFunction = serviceFunction;
         this.requestClass = requestClass;
     }
@@ -22,8 +23,8 @@ public class BaseHandler<Req, Res> {
      * a handler and DAO method: handler:handleRequest
      */
     public Object handleRequest(Request req, Response res) {
-        Req requestObj = JsonUtil.fromJson(req.body(), requestClass);
-        Res resultObj = serviceFunction.apply(requestObj);
+        Q requestObj = JsonUtil.fromJson(req.body(), requestClass);
+        A resultObj = serviceFunction.apply(requestObj);
         res.type("application/json");
         return JsonUtil.toJson(resultObj);
     }

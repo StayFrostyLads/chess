@@ -5,7 +5,6 @@ import dataaccess.*;
 import dataaccess.implementation.*;
 import handler.*;
 import json.JsonUtil;
-import model.AuthData;
 import service.*;
 import spark.*;
 
