@@ -68,7 +68,7 @@ public class Server {
             if (method.equals("DELETE") && (path.equals("/db"))) {
                 return;
             }
-            String token = request.headers("authorization");
+            String token = request.headers("Authorization");
             AuthData auth = authService.validate(token);
             request.attribute("auth", auth);
         });
@@ -78,7 +78,7 @@ public class Server {
         Spark.post("/session", loginHandler::handleRequest);
 
         Spark.delete("/session", (request, response) -> {
-            String token = request.headers("authorization");
+            String token = request.headers("Authorization");
             if (token == null || token.isBlank()) {
                 throw new AuthenticationException("Missing authToken " + token);
             }
@@ -88,7 +88,7 @@ public class Server {
             return JsonUtil.toJson(result);
         });
         Spark.get("/game", (request, response) -> {
-            String token = request.headers("authorization");
+            String token = request.headers("Authorization");
             if (token == null || token.isBlank()) {
                 throw new AuthenticationException("Missing authToken " + token);
             }
@@ -98,17 +98,17 @@ public class Server {
             return JsonUtil.toJson(result);
         });
         Spark.post("/game", (request, response) -> {
-            String token = request.headers("authorization");
+            String token = request.headers("Authorization");
             if (token == null || token.isBlank()) {
                 throw new AuthenticationException("Missing authToken " + token);
             }
 
-            var bodyRequest = JsonUtil.fromJson(request.body(), CreateGameService.Request.class);
+            CreateGameService.Request bodyRequest = JsonUtil.fromJson(request.body(), CreateGameService.Request.class);
             if (bodyRequest == null || bodyRequest.gameName() == null || bodyRequest.gameName().isBlank()) {
                 throw new BadRequestException("Missing or empty gameName");
             }
 
-            var fullRequest = new CreateGameService.Request(token, bodyRequest.gameName());
+            CreateGameService.Request fullRequest = new CreateGameService.Request(token, bodyRequest.gameName());
 
             CreateGameService.Result result = createGameService.createGame(fullRequest);
             response.type("application/json");
