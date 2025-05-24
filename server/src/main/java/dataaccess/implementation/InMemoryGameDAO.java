@@ -1,7 +1,10 @@
 package dataaccess.implementation;
 
+import chess.ChessGame;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.GameData;
+
 import java.util.*;
 
 public class InMemoryGameDAO implements GameDAO {
@@ -32,6 +35,25 @@ public class InMemoryGameDAO implements GameDAO {
     @Override
     public Optional<GameData> getGame(int gameID) {
         return Optional.ofNullable(store.get(gameID));
+    }
+
+    @Override
+    public void joinGame(int gameID, String username, ChessGame.TeamColor color) throws DataAccessException{
+        GameData oldData = store.get(gameID);
+        if (oldData == null) {
+            throw new DataAccessException("No such game: " + gameID);
+        }
+        String white = oldData.whiteUsername();
+        String black = oldData.blackUsername();
+        if (color == ChessGame.TeamColor.WHITE) {
+            white = username;
+        } else {
+            black = username;
+        }
+        GameData updatedData = new GameData(oldData.gameID(), white, black,
+                                            oldData.gameName(), oldData.game()
+        );
+        store.put(gameID, updatedData);
     }
 
     @Override

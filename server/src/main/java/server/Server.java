@@ -53,6 +53,12 @@ public class Server {
             CreateGameService.Request.class
     );
 
+    JoinGameService joinGameService = new JoinGameService(authDAO, gameDAO);
+    BaseHandler<JoinGameService.Request, JoinGameService.Result> joinGameHandler = new BaseHandler<>(
+            joinGameService::joinGame,
+            JoinGameService.Request.class
+    );
+
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -114,6 +120,25 @@ public class Server {
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
+        Spark.put("/game", (request, response) -> {
+            String token = request.headers("Authorization");
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken " + token);
+            }
+
+            JoinGameService.Request bodyRequest = JsonUtil.fromJson(request.body(), JoinGameService.Request.class);
+            if (bodyRequest == null) {
+                throw new BadRequestException("Missing request body");
+            }
+
+            JoinGameService.Request fullRequest = new JoinGameService.Request(token,
+                                                                            bodyRequest.playerColor(),
+                                                                            bodyRequest.gameID()
+            );
+            JoinGameService.Result result = joinGameService.joinGame(fullRequest);
+            response.type("application/json");
+            return JsonUtil.toJson(result);
+        });
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
 
@@ -146,7 +171,7 @@ public class Server {
 
     public void errorHandler(Exception e, Request request, Response response) {
         int statusCode;
-        if (e instanceof AlreadyTakenException) {
+        if (e instanceof AlreadyTakenException || e instanceof ForbiddenException) {
             statusCode = 403;
         } else if (e instanceof AuthenticationException) {
             statusCode = 401;
