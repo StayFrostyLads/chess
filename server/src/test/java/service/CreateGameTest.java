@@ -44,7 +44,7 @@ public class CreateGameTest {
                 "The DAO should have exactly 1 game stored right now");
         GameData store = gameList.getFirst();
         assertEquals(result.gameID(), store.gameID());
-        assertEquals("jack", store.whiteUsername());
+        assertNull(store.whiteUsername());
         assertNull(store.blackUsername());
         assertEquals(name, store.gameName());
         assertNotNull(store.game(), "GameData in the database should contain a ChessGame instance");

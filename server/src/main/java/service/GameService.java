@@ -18,7 +18,9 @@ public class GameService {
     public CreateGameResult createGame(String authToken, String gameName) {
         try {
             AuthData auth = authService.validateAuthToken(authToken);
-
+            if (gameName == null || gameName.isBlank()) {
+                throw new BadRequestException("Game name can't be null or empty");
+            }
             GameData newGame = new GameData(0, null,
                     null, gameName, new ChessGame()
             );
