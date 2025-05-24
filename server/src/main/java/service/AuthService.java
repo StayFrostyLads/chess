@@ -1,26 +1,42 @@
 package service;
 
-import dataaccess.AuthDAO;
-import dataaccess.DataAccessException;
-import model.AuthData;
+import dataaccess.*;
+import model.*;
 import java.util.Optional;
 
 public class AuthService {
     private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
+    private final UserDAO userDAO;
 
-    public AuthService(AuthDAO authDAO) {
+    public AuthService(AuthDAO authDAO, GameDAO gameDAO, UserDAO userDAO) {
         this.authDAO = authDAO;
+        this.gameDAO = gameDAO;
+        this.userDAO = userDAO;
     }
 
-    public AuthData validate(String authToken) {
+    public AuthData validateAuthToken(String authToken) {
         try {
-            Optional<AuthData> authOpt = authDAO.getAuth(authToken);
-            if (authOpt.isEmpty()) {
-                throw new AuthenticationException("Invalid authToken");
+            if (authToken == null || authToken.isBlank()) {
+                throw new AuthenticationException("Missing auth token");
             }
-            return authOpt.get();
+            return authDAO.getAuth(authToken).orElseThrow(
+                    () -> new AuthenticationException("Invalid auth token"));
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during registration", e);
         }
     }
+
+    public ClearResult clearDatabase() {
+        try {
+            authDAO.clear();
+            gameDAO.clear();
+            userDAO.clear();
+            return new ClearResult(true, "Database successfully cleared!");
+        } catch (Exception e) {
+            throw new ClearFailedException("Could not clear the database", e);
+        }
+    }
+
+    public record ClearResult(boolean success, String message) { }
 }

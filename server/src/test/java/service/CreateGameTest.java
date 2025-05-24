@@ -13,25 +13,29 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CreateGameTest {
 
     private GameDAO gameDAO;
-    private CreateGameService gameService;
+    private AuthDAO authDAO;
+    private UserDAO userDAO;
+    private GameService gameService;
+    private AuthService authService;
     private String validToken;
 
     @BeforeEach
     void setup() throws DataAccessException {
-        AuthDAO authDAO = new InMemoryAuthDAO();
+        authDAO = new InMemoryAuthDAO();
         gameDAO = new InMemoryGameDAO();
+        userDAO = new InMemoryUserDAO();
+        authService = new AuthService(authDAO, gameDAO, userDAO);
+        gameService = new GameService(gameDAO, authService);
+
         AuthData auth = authDAO.createAuth("jack");
         validToken = auth.authToken();
-
-        gameService = new CreateGameService(authDAO, gameDAO);
     }
 
     @Test
     @DisplayName("Successful game creation")
     void createGameSuccessfully() {
         String name = "Test Game";
-        CreateGameService.Request request = new CreateGameService.Request(validToken, name);
-        CreateGameService.Result result = gameService.createGame(request);
+        GameService.CreateGameResult result = gameService.createGame(validToken, name);
 
         assertTrue(result.gameID() > 0, "gameID should have a positive value");
 
@@ -50,18 +54,17 @@ public class CreateGameTest {
     @Test
     @DisplayName("Missing token throws an AuthenticationException")
     void createGameMissingToken() {
-        CreateGameService.Request request = new CreateGameService.Request(null, "not-game");
-        assertThrows(AuthenticationException.class, () -> gameService.createGame(request),
-                "Expected AuthenticationException when authToken is missing"
+        assertThrows(AuthenticationException.class,
+                () -> gameService.createGame(null, "game"),
+                "Expected AuthenticationException when authToken is null"
         );
     }
 
     @Test
     @DisplayName("Invalid token throws an AuthenticationException")
     void createGameInvalidToken() {
-        CreateGameService.Request request = new CreateGameService.Request("fake-token-haha",
-                "not-game");
-        assertThrows(AuthenticationException.class, () -> gameService.createGame(request),
+        assertThrows(AuthenticationException.class,
+                () -> gameService.createGame("not-a-real-token", "game"),
                 "Expected AuthenticationException when authToken is invalid"
         );
     }
@@ -69,12 +72,10 @@ public class CreateGameTest {
     @Test
     @DisplayName("Missing gameName throws a BadRequestException")
     void createGameMissingName() {
-        CreateGameService.Request request1 = new CreateGameService.Request(validToken, null);
-        CreateGameService.Request request2 = new CreateGameService.Request(validToken, "");
-        assertThrows(BadRequestException.class, () -> gameService.createGame(request1),
+        assertThrows(BadRequestException.class, () -> gameService.createGame(validToken, null),
                 "Expected BadRequestException when gameName is null"
                 );
-        assertThrows(BadRequestException.class, () -> gameService.createGame(request2),
+        assertThrows(BadRequestException.class, () -> gameService.createGame(validToken, ""),
                 "Expected BadRequestException when gameName is empty"
         );
     }

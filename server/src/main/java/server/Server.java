@@ -15,130 +15,90 @@ public class Server {
 
     private final Gson gson = new Gson();
 
-    AuthDAO authDAO = new InMemoryAuthDAO();
-    GameDAO gameDAO = new InMemoryGameDAO();
-    UserDAO userDAO = new InMemoryUserDAO();
+    private final AuthDAO authDAO = new InMemoryAuthDAO();
+    private final GameDAO gameDAO = new InMemoryGameDAO();
+    private final UserDAO userDAO = new InMemoryUserDAO();
 
-    AuthService authService = new AuthService(authDAO);
+    private final AuthService authService = new AuthService(authDAO, gameDAO, userDAO);
+    private final UserService userService = new UserService(userDAO, authDAO, authService);
+    private final GameService gameService = new GameService(gameDAO, authService);
 
-    ClearService clearService = new ClearService(authDAO, gameDAO, userDAO);
-    BaseHandler<ClearService.Request, ClearService.Result> clearHandler = new BaseHandler<>(
-            request -> clearService.clear(),
-            ClearService.Request.class
+    private final BaseHandler<UserService.RegisterRequest, UserService.AuthResult> registerHandler = new BaseHandler<>(
+            request -> userService.register(request.username(), request.password(),
+                    request.email()), UserService.RegisterRequest.class);
+
+    private final BaseHandler<UserService.LoginRequest, UserService.AuthResult> loginHandler = new BaseHandler<>(
+            request -> userService.login(request.username(), request.password()),
+                        UserService.LoginRequest.class
     );
 
-    RegisterService registerService = new RegisterService(userDAO, authDAO);
-    BaseHandler<RegisterService.Request, RegisterService.Result> registerHandler = new BaseHandler<>(
-            registerService::register,
-            RegisterService.Request.class
-    );
-
-    LoginService loginService = new LoginService(userDAO, authDAO);
-    BaseHandler<LoginService.Request, LoginService.Result> loginHandler = new BaseHandler<>(
-            loginService::login,
-            LoginService.Request.class
-    );
-
-    LogoutService logoutService = new LogoutService(authDAO);
-
-    ListGamesService listGamesService = new ListGamesService(authDAO, gameDAO);
-    BaseHandler<ListGamesService.Request, ListGamesService.Result> listGamesHandler = new BaseHandler<>(
-            listGamesService::listGames,
-            ListGamesService.Request.class
-    );
-
-    CreateGameService createGameService = new CreateGameService(authDAO, gameDAO);
-    BaseHandler<CreateGameService.Request, CreateGameService.Result> createGameHandler = new BaseHandler<>(
-            createGameService::createGame,
-            CreateGameService.Request.class
-    );
-
-    JoinGameService joinGameService = new JoinGameService(authDAO, gameDAO);
-    BaseHandler<JoinGameService.Request, JoinGameService.Result> joinGameHandler = new BaseHandler<>(
-            joinGameService::joinGame,
-            JoinGameService.Request.class
-    );
-
+    private final BaseHandler<Void, AuthService.ClearResult> clearHandler =
+            new BaseHandler<>(request -> authService.clearDatabase(), Void.class);
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
 
-        Spark.before((request, response) -> {
-            String path = request.pathInfo();
-            String method = request.requestMethod();
-
-            if (method.equals("POST") && (path.equals("/user") || (path.equals("/session")))) {
-                return;
-            }
-            if (method.equals("DELETE") && (path.equals("/db"))) {
-                return;
-            }
-            String token = request.headers("Authorization");
-            AuthData auth = authService.validate(token);
-            request.attribute("auth", auth);
-        });
-
         // Register your endpoints and handle exceptions here.
+
+        // Register
         Spark.post("/user", registerHandler::handleRequest);
+
+        // Login
         Spark.post("/session", loginHandler::handleRequest);
 
+        // Logout
         Spark.delete("/session", (request, response) -> {
             String token = request.headers("Authorization");
             if (token == null || token.isBlank()) {
                 throw new AuthenticationException("Missing authToken " + token);
             }
 
-            LogoutService.Result result = logoutService.logout(new LogoutService.Request(token));
+            UserService.LogoutResult result = userService.logout(token);
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
+
+        // List Games
         Spark.get("/game", (request, response) -> {
             String token = request.headers("Authorization");
             if (token == null || token.isBlank()) {
                 throw new AuthenticationException("Missing authToken " + token);
             }
 
-            ListGamesService.Result result = listGamesService.listGames(new ListGamesService.Request(token));
+            GameService.ListGamesResult result = gameService.listGames(token);
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
+
+        // Create Game
         Spark.post("/game", (request, response) -> {
             String token = request.headers("Authorization");
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken " + token);
-            }
-
-            CreateGameService.Request bodyRequest = JsonUtil.fromJson(request.body(), CreateGameService.Request.class);
-            if (bodyRequest == null || bodyRequest.gameName() == null || bodyRequest.gameName().isBlank()) {
+            GameService.CreateGameRequest body = JsonUtil.fromJson(request.body(), GameService.CreateGameRequest.class);
+            if (body == null || body.gameName() == null || body.gameName().isBlank()) {
                 throw new BadRequestException("Missing or empty gameName");
             }
 
-            CreateGameService.Request fullRequest = new CreateGameService.Request(token, bodyRequest.gameName());
-
-            CreateGameService.Result result = createGameService.createGame(fullRequest);
+            GameService.CreateGameResult result = gameService.createGame(token, body.gameName());
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
+
+        // Join Game
         Spark.put("/game", (request, response) -> {
             String token = request.headers("Authorization");
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken " + token);
-            }
 
-            JoinGameService.Request bodyRequest = JsonUtil.fromJson(request.body(), JoinGameService.Request.class);
-            if (bodyRequest == null) {
+            GameService.JoinGameRequest body = JsonUtil.fromJson(request.body(), GameService.JoinGameRequest.class);
+            if (body == null) {
                 throw new BadRequestException("Missing request body");
             }
 
-            JoinGameService.Request fullRequest = new JoinGameService.Request(token,
-                                                                            bodyRequest.playerColor(),
-                                                                            bodyRequest.gameID()
-            );
-            JoinGameService.Result result = joinGameService.joinGame(fullRequest);
+            GameService.JoinGameResult result = gameService.joinGame(token, body.gameID(), body.playerColor());
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
+
+        // Clear Databases
         Spark.delete("/db", clearHandler::handleRequest);
         Spark.get("/error", this::throwError);
 

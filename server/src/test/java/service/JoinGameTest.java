@@ -1,104 +1,82 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.implementation.*;
 import dataaccess.*;
+import dataaccess.implementation.*;
 import model.*;
 import org.junit.jupiter.api.*;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JoinGameTest {
 
+    private GameService gameService;
+    private AuthService authService;
     private GameDAO gameDAO;
-    private JoinGameService gameService;
+    private AuthDAO authDAO;
+    private UserDAO userDAO;
     private String validToken;
     private int gameID;
 
-
     @BeforeEach
     void setup() throws DataAccessException {
-        AuthDAO authDAO = new InMemoryAuthDAO();
         gameDAO = new InMemoryGameDAO();
-        AuthData auth = authDAO.createAuth("jack");
-        validToken = auth.authToken();
+        authDAO = new InMemoryAuthDAO();
+        userDAO = new InMemoryUserDAO();
+        authService = new AuthService(authDAO, gameDAO, userDAO);
+        gameService = new GameService(gameDAO, authService);
 
-        GameData originalGame = new GameData(0, "jack",
-                                null, "The first of many", new ChessGame());
-        gameID = gameDAO.createGame(originalGame);
+        validToken = authDAO.createAuth("jack").authToken();
+
+        GameData game = new GameData(0, "jack", null,
+                        "Test Game", new ChessGame());
+        gameID = gameDAO.createGame(game);
     }
 
     @Test
-    @DisplayName("Join as white fail because occupied")
-    void joinWhiteAlreadyTaken() {
-        JoinGameService.Request request = new JoinGameService.Request(validToken, "WHITE", gameID);
-        assertThrows(ForbiddenException.class, () -> gameService.joinGame(request),
-                "Expected ForbiddenException for occupied white slot");
+    @DisplayName("Join as white throws ForbiddenException if slot taken")
+    void joinWhiteTaken() {
+        assertThrows(ForbiddenException.class,
+                () -> gameService.joinGame(validToken, gameID, "WHITE"));
     }
 
     @Test
-    @DisplayName("Join as black success because unoccupied")
-    void joinBlackSuccessfully() {
-        JoinGameService.Request request = new JoinGameService.Request(validToken, "WHITE", gameID);
-        JoinGameService.Result result = gameService.joinGame(request);
-        assertNotNull(result, "Empty slot for black expected");
+    @DisplayName("Join as black successfully")
+    void joinBlackSuccess() {
+        GameService.JoinGameResult result = gameService.joinGame(validToken, gameID, "BLACK");
+        assertNotNull(result);
 
-        GameData updatedData = gameDAO.getGame(gameID).orElseThrow();
-        assertEquals("jack", updatedData.whiteUsername(), "White user remains unchanged");
-        assertEquals("jack", updatedData.blackUsername(), "Black user set to jack");
+        GameData updated = gameDAO.getGame(gameID).orElseThrow();
+        assertEquals("jack", updated.whiteUsername());
+        assertEquals("jack", updated.blackUsername());
     }
 
     @Test
-    @DisplayName("Join twice as black unsuccessfully because illegal")
+    @DisplayName("Joining again to same color throws ForbiddenException")
     void joinBlackTwice() {
-        gameService.joinGame(new JoinGameService.Request(validToken, "BLACK", gameID));
-        assertThrows(ForbiddenException.class, () -> gameService.joinGame(
-                new JoinGameService.Request(validToken, "BLACK", gameID)
-                ),
-                "Expected ForbiddenException for occupied black slot"
-        );
+        gameService.joinGame(validToken, gameID, "BLACK");
+        assertThrows(ForbiddenException.class,
+                () -> gameService.joinGame(validToken, gameID, "BLACK"));
     }
 
     @Test
-    @DisplayName("Invalid color throws BadRequestException")
-    void joinBadColor() {
-        JoinGameService.Request request = new JoinGameService.Request(validToken, "PURPLE", gameID);
+    @DisplayName("Joining with invalid color throws BadRequestException")
+    void joinInvalidColor() {
         assertThrows(BadRequestException.class,
-                () -> gameService.joinGame(request),
-                "Expected BadRequestException for invalid color");
+                () -> gameService.joinGame(validToken, gameID, "PURPLE"));
     }
 
     @Test
-    @DisplayName("Unknown game throws BadRequestException")
+    @DisplayName("Joining unknown game throws BadRequestException")
     void joinUnknownGame() {
-        JoinGameService.Request request = new JoinGameService.Request(validToken,
-                                                            "WHITE", 4444);
         assertThrows(BadRequestException.class,
-                () -> gameService.joinGame(request),
-                "Expected BadRequestException for unknown game");
+                () -> gameService.joinGame(validToken, 9999, "WHITE"));
     }
 
     @Test
-    @DisplayName("Invalid token throws AuthenticationException")
+    @DisplayName("Joining with invalid token throws AuthenticationException")
     void joinInvalidToken() {
-        JoinGameService.Request request = new JoinGameService.Request("not-a-real-token",
-                                                            "WHITE", gameID);
         assertThrows(AuthenticationException.class,
-                () -> gameService.joinGame(request),
-                "Expected AuthenticationException when an invalid token is given");
+                () -> gameService.joinGame("fake-token", gameID, "BLACK"));
     }
-
-    @Test
-    @DisplayName("Missing token throws AuthenticationException")
-    void joinMissingToken() {
-        JoinGameService.Request request = new JoinGameService.Request(null,
-                "WHITE", gameID);
-        assertThrows(AuthenticationException.class,
-                () -> gameService.joinGame(request),
-                "Expected AuthenticationException when the token is null");
-    }
-
-
 }

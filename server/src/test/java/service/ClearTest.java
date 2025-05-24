@@ -18,14 +18,14 @@ class ClearTest {
     private AuthDAO authDAO;
     private GameDAO gameDAO;
     private UserDAO userDAO;
-    private ClearService clearService;
+    private AuthService authService;
 
     @BeforeEach
     public void setup() throws DataAccessException {
         authDAO = new InMemoryAuthDAO();
         gameDAO = new InMemoryGameDAO();
         userDAO = new InMemoryUserDAO();
-        clearService = new ClearService(authDAO, gameDAO, userDAO);
+        authService = new AuthService(authDAO, gameDAO, userDAO);
 
         authDAO.createAuth( "Jack");
         gameDAO.addGame(new GameData(1234, "Jack",
@@ -36,7 +36,7 @@ class ClearTest {
     @Test
     @DisplayName("Successful Clear")
     public void clearSuccessfully() {
-        ClearService.Result res = clearService.clear();
+        AuthService.ClearResult res = authService.clearDatabase();
 
         assertTrue(res.success());
         assertEquals("Database successfully cleared!", res.message());
@@ -82,11 +82,9 @@ class ClearTest {
             }
         };
 
-        ClearService testService = new ClearService(failAuth,
-                                                    new InMemoryGameDAO(),
-                                                    new InMemoryUserDAO());
+        AuthService failingService = new AuthService(failAuth, new InMemoryGameDAO(), new InMemoryUserDAO());
         assertThrows(ClearFailedException.class,
-                testService::clear,
-                "Expected a ClearFailedException error when DAO.clear() fails");
+                failingService::clearDatabase,
+                "Expected a ClearFailedException error when authDAO.clear() fails");
     }
 }

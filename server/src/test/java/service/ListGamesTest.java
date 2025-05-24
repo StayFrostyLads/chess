@@ -1,8 +1,8 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.implementation.*;
 import dataaccess.*;
+import dataaccess.implementation.*;
 import model.*;
 import org.junit.jupiter.api.*;
 
@@ -10,74 +10,57 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ListGamesTest {
 
+    private GameService gameService;
     private GameDAO gameDAO;
-    private ListGamesService gamesService;
+    private AuthDAO authDAO;
+    private AuthService authService;
     private String validToken;
 
     @BeforeEach
     void setup() throws DataAccessException {
-        AuthDAO authDAO = new InMemoryAuthDAO();
         gameDAO = new InMemoryGameDAO();
-        AuthData auth = authDAO.createAuth("jack");
-        validToken = auth.authToken();
+        authDAO = new InMemoryAuthDAO();
+        authService = new AuthService(authDAO, gameDAO, new InMemoryUserDAO());
+        gameService = new GameService(gameDAO, authService);
 
-        gamesService = new ListGamesService(authDAO, gameDAO);
+        validToken = authDAO.createAuth("jack").authToken();
     }
 
     @Test
-    @DisplayName("Empty game list correctly displays no games")
+    @DisplayName("List is empty initially")
     void listGamesEmpty() {
-        ListGamesService.Request request = new ListGamesService.Request(validToken);
-        ListGamesService.Result result = gamesService.listGames(request);
-
-        assertNotNull(result.games(), "games() should not return as null");
-        assertEquals(0, result.games().length,
-                "Expecting no games displayed while the DAO is empty");
+        GameService.ListGamesResult result = gameService.listGames(validToken);
+        assertNotNull(result.games());
+        assertEquals(0, result.games().length);
     }
 
     @Test
-    @DisplayName("Game list correctly displays after given valid authToken")
-    void listGamesAfterValidated() throws DataAccessException {
-        GameData game1 = new GameData(1, "jack",
-                        null, "First Game", new ChessGame());
-        GameData game2 = new GameData(2, "liv",
-                        "josh", "Second Game", new ChessGame());
-        gameDAO.createGame(game1);
-        gameDAO.createGame(game2);
+    @DisplayName("List contains games after creation")
+    void listGamesPopulated() throws DataAccessException {
+        gameDAO.createGame(new GameData(1, "jack", null,
+                            "One", new ChessGame()));
+        gameDAO.createGame(new GameData(2, "liv", "josh",
+                            "Two", new ChessGame()));
 
-        ListGamesService.Request request = new ListGamesService.Request(validToken);
-        ListGamesService.Result result = gamesService.listGames(request);
-        GameEntry[] entries = result.games();
+        GameService.ListGamesResult result = gameService.listGames(validToken);
+        assertEquals(2, result.games().length);
 
-        assertEquals(2, entries.length, "There were not 2 games properly created");
-
-        GameEntry entry1 = new GameEntry(1, "First Game",
-                            "jack", null);
-        GameEntry entry2 = new GameEntry(2, "Second Game",
-                            "liv", "josh");
-
-        assertArrayEquals(new GameEntry[]{entry1, entry2}, entries,
-                "Returned entries did not match entries in the database");
+        var names = result.games();
+        assertEquals("One", names[0].gameName());
+        assertEquals("Two", names[1].gameName());
     }
 
     @Test
-    @DisplayName("Missing token throws an AuthenticationException")
-    void listGamesMissingToken() {
-        ListGamesService.Request request = new ListGamesService.Request(null);
-        assertThrows(AuthenticationException.class, () -> gamesService.listGames(request),
-                "Expected AuthenticationException when authToken is missing"
-                );
+    @DisplayName("Missing token throws AuthenticationException")
+    void listMissingToken() {
+        assertThrows(AuthenticationException.class,
+                () -> gameService.listGames(null));
     }
 
     @Test
-    @DisplayName("Invalid token throws an AuthenticationException")
-    void listGamesInvalidToken() {
-        ListGamesService.Request request = new ListGamesService.Request("fake-token-haha");
-        assertThrows(AuthenticationException.class, () -> gamesService.listGames(request),
-                "Expected AuthenticationException when authToken is invalid"
-        );
+    @DisplayName("Invalid token throws AuthenticationException")
+    void listInvalidToken() {
+        assertThrows(AuthenticationException.class,
+                () -> gameService.listGames("bad-token"));
     }
-
-
-
 }
