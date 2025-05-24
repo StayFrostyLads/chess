@@ -19,7 +19,7 @@ public class GameService {
         try {
             AuthData auth = authService.validateAuthToken(authToken);
 
-            GameData newGame = new GameData(0, auth.username(),
+            GameData newGame = new GameData(0, null,
                     null, gameName, new ChessGame()
             );
             int gameID = gameDAO.createGame(newGame);

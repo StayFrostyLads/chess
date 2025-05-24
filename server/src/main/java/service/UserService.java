@@ -18,6 +18,16 @@ public class UserService {
 
     public AuthResult register(String username, String password, String email) {
         try {
+            if (username == null || username.isBlank()) {
+                throw new BadRequestException("Please choose a username");
+            }
+            if (password == null || password.isBlank()) {
+                throw new BadRequestException("Please choose a password");
+            }
+            if (email == null || email.isBlank()) {
+                throw new BadRequestException("Please insert an email");
+            }
+
             if (userDAO.getUser(username).isPresent()) {
                 throw new AlreadyTakenException("The username '" + username + "' is already taken");
             }
@@ -36,6 +46,12 @@ public class UserService {
 
     public AuthResult login(String username, String password) {
         try {
+            if (username == null || username.isBlank()) {
+                throw new BadRequestException("Please input a valid, existing username");
+            }
+            if (password == null || password.isBlank()) {
+                throw new BadRequestException("Please insert a password");
+            }
             Optional<UserData> possibleUser = userDAO.getUser(username);
             if (possibleUser.isEmpty()) {
                 throw new AuthenticationException("Invalid username");
@@ -46,6 +62,7 @@ public class UserService {
             if (!user.password().equals(hashedPassword)) {
                 throw new AuthenticationException("Invalid password");
             }
+
 
             AuthData auth = authDAO.createAuth(user.username());
             return new AuthResult(auth.authToken(), user.username());
