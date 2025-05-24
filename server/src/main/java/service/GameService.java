@@ -57,18 +57,14 @@ public class GameService {
     }
 
     public ListGamesResult listGames(String authToken) {
-        try {
-            authService.validateAuthToken(authToken);
-            List<GameData> games = gameDAO.listGames();
-            GameEntry[] entries = games.stream().map(game ->
-                    new GameEntry(game.gameID(),
-                            game.gameName(),
-                            game.whiteUsername(),
-                            game.blackUsername())).toArray(GameEntry[]::new);
-            return new ListGamesResult(entries);
-        } catch (RuntimeException e) {
-            throw new ServerException("Database connection error while listing games", e);
-        }
+        authService.validateAuthToken(authToken);
+        List<GameData> games = gameDAO.listGames();
+        GameEntry[] entries = games.stream().map(game ->
+                new GameEntry(game.gameID(),
+                        game.gameName(),
+                        game.whiteUsername(),
+                        game.blackUsername())).toArray(GameEntry[]::new);
+        return new ListGamesResult(entries);
     }
 
     public record CreateGameResult(int gameID) { }

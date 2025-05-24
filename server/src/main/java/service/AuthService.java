@@ -23,7 +23,7 @@ public class AuthService {
             return authDAO.getAuth(authToken).orElseThrow(
                     () -> new AuthenticationException("Invalid auth token"));
         } catch (DataAccessException e) {
-            throw new ServerException("Database connection error during registration", e);
+            throw new ServerException("Failed to access auth data", e);
         }
     }
 
