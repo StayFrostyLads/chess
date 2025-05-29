@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
+import dataaccess.databaseimplementation.SchemaInitializer;
 import dataaccess.memoryimplementation.*;
 import handler.*;
 import json.JsonUtil;
@@ -37,6 +38,9 @@ public class Server {
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
+
+        // Initialize the database
+        SchemaInitializer.initialize();
 
         // Register your endpoints and handle exceptions here.
 
