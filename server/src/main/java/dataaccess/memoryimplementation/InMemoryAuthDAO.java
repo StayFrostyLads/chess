@@ -1,4 +1,4 @@
-package dataaccess.implementation;
+package dataaccess.memoryimplementation;
 
 import dataaccess.AuthDAO;
 import model.AuthData;

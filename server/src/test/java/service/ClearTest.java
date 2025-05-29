@@ -2,7 +2,7 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.*;
-import dataaccess.implementation.*;
+import dataaccess.memoryimplementation.*;
 import model.*;
 import org.junit.jupiter.api.*;
 

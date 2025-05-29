@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.*;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 
@@ -58,8 +59,7 @@ public class UserService {
             }
 
             UserData user = possibleUser.get();
-            String hashedPassword = hashPassword(password);
-            if (!user.password().equals(hashedPassword)) {
+            if (!verifyPassword(password, user.password())) {
                 throw new AuthenticationException("Invalid password");
             }
 
@@ -82,7 +82,11 @@ public class UserService {
     }
 
     private String hashPassword(String plain) {
-        return Integer.toHexString(plain.hashCode());
+        return BCrypt.hashpw(plain, BCrypt.gensalt());
+    }
+
+    private boolean verifyPassword(String plain, String hashed) {
+        return BCrypt.checkpw(plain, hashed);
     }
 
     public record AuthResult(String authToken, String username) { }
