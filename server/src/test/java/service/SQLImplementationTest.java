@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.*;
 import dataaccess.databaseimplementation.SQLAuthDAO;
+import dataaccess.databaseimplementation.SQLGameDAO;
 import dataaccess.databaseimplementation.SQLUserDAO;
 import model.*;
 import org.junit.jupiter.api.*;
@@ -104,5 +105,30 @@ public class SQLImplementationTest {
             Optional<AuthData> authResult = authDAO.getAuth(token.authToken());
             assertTrue(authResult.isEmpty(), "Auth Token should be deleted due to foreign key cascade");
         }
+    }
+
+    @Nested
+    class SQLGameDAOTests {
+        private final GameDAO gameDAO = new SQLGameDAO();
+        private final UserDAO userDAO = new SQLUserDAO();
+
+        @BeforeEach
+        void setupUser() throws DataAccessException {
+            userDAO.createUser(new UserData("liv", "volleyball", "ogg@gmail.com"));
+            userDAO.createUser(new UserData("josh", "salmon", "hhector@gmail.com"));
+        }
+
+//        @Test
+//        @DisplayName("Successfully create and retrieve a game")
+//        void successfullyCreateAndRetrieveGame() throws DataAccessException {
+//            GameData newGame = gameDAO.createGame("Test Game");
+//            assertNotNull(newGame);
+//            assertEquals("Test Game", newGame.gameName());
+//
+//            Optional<GameData> testGame = gameDAO.getGame(newGame.gameID());
+//            assertTrue(testGame.isPresent());
+//            assertEquals(newGame.gameID(), testGame.get().gameID());
+//            assertEquals("Test Game", testGame.get().gameName());
+//        }
     }
 }

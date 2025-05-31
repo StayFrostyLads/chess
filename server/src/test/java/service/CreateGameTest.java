@@ -34,7 +34,7 @@ public class CreateGameTest {
     @DisplayName("Successful game creation")
     void createGameSuccessfully() throws DataAccessException {
         String name = "Test Game";
-        GameService.CreateGameResult result = gameService.createGame(validToken, name);
+        GameService.CreateGameResult result = gameService.createGame(name, validToken);
 
         assertTrue(result.gameID() > 0, "gameID should have a positive value");
 
@@ -54,7 +54,7 @@ public class CreateGameTest {
     @DisplayName("Missing token throws an AuthenticationException")
     void createGameMissingToken() {
         assertThrows(AuthenticationException.class,
-                () -> gameService.createGame(null, "game"),
+                () -> gameService.createGame("game", null),
                 "Expected AuthenticationException when authToken is null"
         );
     }
@@ -63,7 +63,7 @@ public class CreateGameTest {
     @DisplayName("Invalid token throws an AuthenticationException")
     void createGameInvalidToken() {
         assertThrows(AuthenticationException.class,
-                () -> gameService.createGame("not-a-real-token", "game"),
+                () -> gameService.createGame("game", "not-a-real-token"),
                 "Expected AuthenticationException when authToken is invalid"
         );
     }
@@ -71,10 +71,10 @@ public class CreateGameTest {
     @Test
     @DisplayName("Missing gameName throws a BadRequestException")
     void createGameMissingName() {
-        assertThrows(BadRequestException.class, () -> gameService.createGame(validToken, null),
+        assertThrows(BadRequestException.class, () -> gameService.createGame(null, validToken),
                 "Expected BadRequestException when gameName is null"
                 );
-        assertThrows(BadRequestException.class, () -> gameService.createGame(validToken, ""),
+        assertThrows(BadRequestException.class, () -> gameService.createGame("", validToken),
                 "Expected BadRequestException when gameName is empty"
         );
     }

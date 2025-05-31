@@ -42,7 +42,8 @@ public class JoinGameTest {
 
     @Test
     @DisplayName("Join as white throws ForbiddenException if slot taken")
-    void joinWhiteTaken() {
+    void joinWhiteTaken() throws DataAccessException {
+        gameDAO.joinGame(gameID, "jack", ChessGame.TeamColor.WHITE);
         assertThrows(ForbiddenException.class,
                 () -> gameService.joinGame(validToken, gameID, "WHITE"));
     }
@@ -54,7 +55,6 @@ public class JoinGameTest {
         assertNotNull(result);
 
         GameData updated = gameDAO.getGame(gameID).orElseThrow();
-        assertEquals("jack", updated.whiteUsername());
         assertEquals("jack", updated.blackUsername());
     }
 

@@ -6,6 +6,9 @@ import dataaccess.memoryimplementation.*;
 import model.*;
 import org.junit.jupiter.api.*;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ListGamesTest {
@@ -37,17 +40,21 @@ public class ListGamesTest {
     @Test
     @DisplayName("List contains games after creation")
     void listGamesPopulated() throws DataAccessException {
-        gameDAO.createGame(new GameData(1, "jack", null,
-                            "One", new ChessGame()));
-        gameDAO.createGame(new GameData(2, "liv", "josh",
-                            "Two", new ChessGame()));
+        GameData game1 = gameDAO.createGame("One");
+        GameData game2 = gameDAO.createGame("Two");
+
+        gameDAO.joinGame(game1.gameID(), "jack", ChessGame.TeamColor.WHITE);
+        gameDAO.joinGame(game2.gameID(), "liv", ChessGame.TeamColor.WHITE);
+        gameDAO.joinGame(game2.gameID(), "josh", ChessGame.TeamColor.BLACK);
 
         GameService.ListGamesResult result = gameService.listGames(validToken);
         assertEquals(2, result.games().length);
 
-        var names = result.games();
-        assertEquals("One", names[0].gameName());
-        assertEquals("Two", names[1].gameName());
+        var games = result.games();
+        List<String> names = Arrays.stream(games).map(GameService.GameEntry::gameName).toList();
+
+        assertTrue(names.contains("One"));
+        assertTrue(names.contains("Two"));
     }
 
     @Test

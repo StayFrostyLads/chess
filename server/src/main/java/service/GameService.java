@@ -22,7 +22,6 @@ public class GameService {
                 throw new BadRequestException("Game name can't be null or empty");
             }
             GameData newGame = gameDAO.createGame(gameName);
-            gameDAO.joinGame(newGame.gameID(), auth.username(), ChessGame.TeamColor.WHITE);
             return new CreateGameResult(newGame.gameID());
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during game creation", e);
@@ -30,30 +29,47 @@ public class GameService {
     }
 
     public JoinGameResult joinGame(String authToken, int gameID, String playerColor) {
+        AuthData auth = authService.validateAuthToken(authToken);
+        ChessGame.TeamColor color;
+
         try {
-            AuthData auth = authService.validateAuthToken(authToken);
-            ChessGame.TeamColor color;
+            color = ChessGame.TeamColor.valueOf(playerColor.toUpperCase());
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid team color: " + playerColor);
+        }
 
-            try {
-                color = ChessGame.TeamColor.valueOf(playerColor.toUpperCase());
-            } catch (Exception e) {
-                throw new BadRequestException("Invalid team color: " + playerColor);
-            }
+        GameData game;
+        try {
+            game = gameDAO.getGame(gameID).orElseThrow(() -> new BadRequestException("Invalid game ID"));
+        } catch (DataAccessException e) {
+            throw new ServerException("Database connection error while retrieving game data", e);
+        }
 
-            GameData game = gameDAO.getGame(gameID).orElseThrow(() -> new BadRequestException("Invalid game ID"));
-
-            if (color == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
+        if (color == ChessGame.TeamColor.WHITE) {
+            if (game.whiteUsername() != null) {
                 throw new ForbiddenException("Someone is already playing as white!");
             }
-            if (color == ChessGame.TeamColor.BLACK && game.blackUsername() != null) {
+            try {
+                gameDAO.joinGame(gameID, auth.username(), ChessGame.TeamColor.WHITE);
+                return new JoinGameResult();
+            } catch (DataAccessException e) {
+                throw new ServerException("Database connection error while joining as white", e);
+            }
+        }
+
+        if (color == ChessGame.TeamColor.BLACK) {
+            if (game.blackUsername() != null) {
                 throw new ForbiddenException("Someone is already playing as black!");
             }
-
-            gameDAO.joinGame(gameID, auth.username(), color);
-            return new JoinGameResult();
-        } catch (DataAccessException e) {
-            throw new ServerException("Database connection error while joining game", e);
+            try {
+                gameDAO.joinGame(gameID, auth.username(), ChessGame.TeamColor.BLACK);
+                return new JoinGameResult();
+            } catch (DataAccessException e) {
+                throw new ServerException("Database connection error while joining as black", e);
+            }
         }
+
+        throw new BadRequestException("Invalid team color: " + playerColor);
     }
 
     public ListGamesResult listGames(String authToken) throws DataAccessException {
