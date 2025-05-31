@@ -1,20 +1,24 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.*;
 import dataaccess.databaseimplementation.SQLAuthDAO;
 import dataaccess.databaseimplementation.SQLGameDAO;
 import dataaccess.databaseimplementation.SQLUserDAO;
 import model.*;
 import org.junit.jupiter.api.*;
+
+import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SQLImplementationTest {
 
     @BeforeEach
-    public void clearDatabase() {
-        new SQLUserDAO().clear();
+    public void clearDatabase() throws DataAccessException {
         new SQLAuthDAO().clear();
+        new SQLGameDAO().clear();
+        new SQLUserDAO().clear();
     }
 
     @Nested
@@ -118,17 +122,70 @@ public class SQLImplementationTest {
             userDAO.createUser(new UserData("josh", "salmon", "hhector@gmail.com"));
         }
 
-//        @Test
-//        @DisplayName("Successfully create and retrieve a game")
-//        void successfullyCreateAndRetrieveGame() throws DataAccessException {
-//            GameData newGame = gameDAO.createGame("Test Game");
-//            assertNotNull(newGame);
-//            assertEquals("Test Game", newGame.gameName());
-//
-//            Optional<GameData> testGame = gameDAO.getGame(newGame.gameID());
-//            assertTrue(testGame.isPresent());
-//            assertEquals(newGame.gameID(), testGame.get().gameID());
-//            assertEquals("Test Game", testGame.get().gameName());
-//        }
+        @Test
+        @DisplayName("Successfully create and retrieve a game")
+        void successfullyCreateAndRetrieveGame() throws DataAccessException {
+            GameData newGame = gameDAO.createGame("Test Game");
+            assertNotNull(newGame);
+            assertEquals("Test Game", newGame.gameName());
+
+            Optional<GameData> testGame = gameDAO.getGame(newGame.gameID());
+            assertTrue(testGame.isPresent());
+            assertEquals(newGame.gameID(), testGame.get().gameID());
+            assertEquals("Test Game", testGame.get().gameName());
+        }
+
+        @Test
+        @DisplayName("Unsuccessfully create a game with a null name")
+        void unsuccessfullyCreateGame() {
+            assertThrows(DataAccessException.class, () -> {
+                gameDAO.createGame(null);
+            });
+        }
+
+        @Test
+        @DisplayName("Successfully list game after creation")
+        void successfullyListGames() throws DataAccessException {
+            gameDAO.clear();
+            List<GameData> emptyList = gameDAO.listGames();
+            assertNotNull(emptyList);
+            assertTrue(emptyList.isEmpty(), "Game list should start out empty");
+
+            GameData game1 = gameDAO.createGame("Rogue One");
+            GameData game2 = gameDAO.createGame("Rogue Two");
+
+            List<GameData> gameList = gameDAO.listGames();
+            assertNotNull(gameList);
+            assertEquals(2, gameList.size(), "Game list should show 2 games");
+
+            assertTrue(gameList.stream().anyMatch(game -> game.gameID() == game1.gameID()),
+                    "listGames() should show the game 'Rogue One'");
+            assertTrue(gameList.stream().anyMatch(game -> game.gameID() == game2.gameID()),
+                    "listGames() should show the game 'Rogue Two'");
+        }
+
+        @Test
+        @DisplayName("Successfully join game as white and black")
+        void joinGameWhiteThenBlack() throws DataAccessException{
+            GameData newGame = gameDAO.createGame("Test Game");
+            int id = newGame.gameID();
+
+            gameDAO.joinGame(id, "liv", ChessGame.TeamColor.WHITE);
+            Optional<GameData> livGame = gameDAO.getGame(id);
+            assertTrue(livGame.isPresent());
+            assertEquals("liv", livGame.get().whiteUsername(),
+                    "White player should show as 'liv'");
+            assertNull(livGame.get().blackUsername(),
+                    "There should be no player as black right now");
+
+            gameDAO.joinGame(id, "josh", ChessGame.TeamColor.BLACK);
+            Optional<GameData> joshGame = gameDAO.getGame(id);
+            assertTrue(joshGame.isPresent());
+            assertEquals("liv", joshGame.get().whiteUsername(),
+                    "White player should show as 'liv'");
+            assertEquals("josh", joshGame.get().blackUsername(),
+                    "Black player should show as 'josh'");
+        }
+
     }
 }
