@@ -35,7 +35,7 @@ class ClearTest {
 
     @Test
     @DisplayName("Successful Clear")
-    public void clearSuccessfully() {
+    public void clearSuccessfully() throws DataAccessException {
         AuthService.ClearResult res = authService.clearDatabase();
 
         assertTrue(res.success());
@@ -48,7 +48,7 @@ class ClearTest {
 
     @Test
     @DisplayName("Still Clears when Empty")
-    public void emptyClear() {
+    public void emptyClear() throws DataAccessException {
         clearSuccessfully();
         clearSuccessfully();
     }

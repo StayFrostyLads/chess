@@ -28,7 +28,7 @@ public class ListGamesTest {
 
     @Test
     @DisplayName("List is empty initially")
-    void listGamesEmpty() {
+    void listGamesEmpty() throws DataAccessException {
         GameService.ListGamesResult result = gameService.listGames(validToken);
         assertNotNull(result.games());
         assertEquals(0, result.games().length);

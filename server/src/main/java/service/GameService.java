@@ -58,7 +58,7 @@ public class GameService {
         }
     }
 
-    public ListGamesResult listGames(String authToken) {
+    public ListGamesResult listGames(String authToken) throws DataAccessException {
         authService.validateAuthToken(authToken);
         List<GameData> games = gameDAO.listGames();
         GameEntry[] entries = games.stream().map(game ->

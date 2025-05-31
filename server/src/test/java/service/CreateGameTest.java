@@ -32,7 +32,7 @@ public class CreateGameTest {
 
     @Test
     @DisplayName("Successful game creation")
-    void createGameSuccessfully() {
+    void createGameSuccessfully() throws DataAccessException {
         String name = "Test Game";
         GameService.CreateGameResult result = gameService.createGame(validToken, name);
 

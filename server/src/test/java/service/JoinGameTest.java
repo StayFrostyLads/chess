@@ -42,7 +42,7 @@ public class JoinGameTest {
 
     @Test
     @DisplayName("Join as black successfully")
-    void joinBlackSuccess() {
+    void joinBlackSuccess() throws DataAccessException {
         GameService.JoinGameResult result = gameService.joinGame(validToken, gameID, "BLACK");
         assertNotNull(result);
 
