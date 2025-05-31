@@ -89,5 +89,5 @@ public class GameService {
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
 
     public record CreateGameRequest(String gameName) { }
-    public record JoinGameRequest(String playerColor, int gameID) { }
+    public record JoinGameRequest(int gameID, String playerColor) { }
 }

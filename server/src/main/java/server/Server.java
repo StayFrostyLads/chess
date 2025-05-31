@@ -82,7 +82,7 @@ public class Server {
                 throw new BadRequestException("Missing or empty gameName");
             }
 
-            GameService.CreateGameResult result = gameService.createGame(token, body.gameName());
+            GameService.CreateGameResult result = gameService.createGame(body.gameName(), token);
             response.type("application/json");
             return JsonUtil.toJson(result);
         });
@@ -94,6 +94,12 @@ public class Server {
             GameService.JoinGameRequest body = JsonUtil.fromJson(request.body(), GameService.JoinGameRequest.class);
             if (body == null) {
                 throw new BadRequestException("Missing request body");
+            }
+            if (body.gameID() <= 0) {
+                throw new BadRequestException("Invalid game ID");
+            }
+            if (body.playerColor() == null || body.playerColor().isBlank()) {
+                throw new BadRequestException("Missing or empty playerColor");
             }
 
             GameService.JoinGameResult result = gameService.joinGame(token, body.gameID(), body.playerColor());
