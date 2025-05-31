@@ -187,5 +187,16 @@ public class SQLImplementationTest {
                     "Black player should show as 'josh'");
         }
 
+        @Test
+        @DisplayName("Unsuccessfully join game with invalid gameID")
+        void unsuccessfullyJoinGameBadID() {
+            int falseID = 3283;
+            DataAccessException ex =
+                    assertThrows(DataAccessException.class,
+                            () -> gameDAO.joinGame(falseID, "liv", ChessGame.TeamColor.WHITE),
+                            "Expecting DataAccessException to be thrown with invalid gameID");
+            String message = ex.getMessage();
+            assertTrue(message.contains("Invalid"), "Error message should mention invalid gameID");
+        }
     }
 }

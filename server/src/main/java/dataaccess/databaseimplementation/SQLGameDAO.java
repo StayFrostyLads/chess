@@ -87,40 +87,70 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void joinGame(int gameID, String username, ChessGame.TeamColor color) throws DataAccessException {
-        String firstSQL = "SELECT whiteUsername, blackUsername FROM games WHERE gameID = ?";
-        String secondSQL;
-
+        final String idSQL = "SELECT gameID FROM games WHERE gameID = ?";
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement checkStmt = conn.prepareStatement(firstSQL)) {
+             PreparedStatement idStmt = conn.prepareStatement(idSQL)) {
 
-            checkStmt.setInt(1, gameID);
-            try (ResultSet rs = checkStmt.executeQuery()) {
+            idStmt.setInt(1, gameID);
+            try (ResultSet rs = idStmt.executeQuery()) {
                 if (!rs.next()) {
-                    throw new BadRequestException("The specified Game ID does not exist: " + gameID);
+                    throw new DataAccessException("Invalid game ID");
                 }
-
-                String white = rs.getString("whiteUsername");
-                String black = rs.getString("blackUsername");
-
-                if ((color == ChessGame.TeamColor.WHITE && white != null) ||
-                        (color == ChessGame.TeamColor.BLACK && black != null)) {
-                    throw new ForbiddenException("Color already taken by another player!");
-                }
-            }
-
-            secondSQL = switch (color) {
-                case WHITE -> "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
-                case BLACK -> "UPDATE games SET blackUsername = ? WHERE gameID = ?";
-            };
-
-            try (PreparedStatement updateStmt = conn.prepareStatement(secondSQL)) {
-                updateStmt.setString(1, username);
-                updateStmt.setInt(2, gameID);
-                updateStmt.executeUpdate();
             }
 
         } catch (SQLException e) {
-            throw new DataAccessException("Error joining game", e);
+            throw new DataAccessException("Database connection error while validating game ID", e);
+        }
+
+        final String fetchSql = "SELECT whiteUsername, blackUsername FROM games WHERE gameID = ?";
+        String white, black;
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement fetchStmt = conn.prepareStatement(fetchSql)) {
+
+            fetchStmt.setInt(1, gameID);
+            try (ResultSet rs = fetchStmt.executeQuery()) {
+                // We already know the game exists, so rs.next() must be true
+                rs.next();
+                white = rs.getString("whiteUsername");
+                black = rs.getString("blackUsername");
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Database connection error while reading game data", e);
+        }
+
+        if (color == ChessGame.TeamColor.WHITE) {
+            if (white != null) {
+                throw new ForbiddenException("Color already taken by another player!");
+            }
+
+            final String updateWhiteSql = "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement updateStmt = conn.prepareStatement(updateWhiteSql)) {
+
+                updateStmt.setString(1, username);
+                updateStmt.setInt(2, gameID);
+                updateStmt.executeUpdate();
+
+            } catch (SQLException e) {
+                throw new DataAccessException("Database connection error while joining as white user", e);
+            }
+
+        } else {
+            if (black != null) {
+                throw new ForbiddenException("Color already taken by another player!");
+            }
+
+            final String updateBlackSql = "UPDATE games SET blackUsername = ? WHERE gameID = ?";
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement updateStmt = conn.prepareStatement(updateBlackSql)) {
+
+                updateStmt.setString(1, username);
+                updateStmt.setInt(2, gameID);
+                updateStmt.executeUpdate();
+
+            } catch (SQLException e) {
+                throw new DataAccessException("Database connection error while joining as black user", e);
+            }
         }
     }
 
