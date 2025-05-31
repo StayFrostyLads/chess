@@ -4,6 +4,7 @@ import dataaccess.*;
 import dataaccess.memoryimplementation.*;
 import model.*;
 import org.junit.jupiter.api.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Optional;
 
@@ -37,14 +38,14 @@ public class UserServiceTest {
         Optional<UserData> stored = userDAO.getUser("jack");
         assertTrue(stored.isPresent());
         assertEquals("jack", stored.get().username());
-        assertEquals(Integer.toHexString("cs240test".hashCode()), stored.get().password());
+        assertTrue(BCrypt.checkpw("cs240test", stored.get().password()));
         assertEquals("jneb2004@byu.edu", stored.get().email());
     }
 
     @Test
     @DisplayName("Registering with existing user throws AlreadyTakenException")
     void registerExistingUser() throws DataAccessException {
-        userDAO.createUser(new UserData("jack", Integer.toHexString("test".hashCode()), "email"));
+        userDAO.createUser(new UserData("jack", BCrypt.hashpw("cs240test", BCrypt.gensalt()), "email"));
 
         assertThrows(AlreadyTakenException.class, () ->
                 userService.register("jack", "newpass", "newemail"));
@@ -55,7 +56,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("Successful login")
     void loginSuccessfully() throws DataAccessException {
-        userDAO.createUser(new UserData("jack", Integer.toHexString("cs240test".hashCode()), "jneb2004@byu.edu"));
+        userDAO.createUser(new UserData("jack", BCrypt.hashpw("cs240test", BCrypt.gensalt()), "jneb2004@byu.edu"));
 
         var result = userService.login("jack", "cs240test");
 
@@ -67,7 +68,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("Login fails with incorrect password")
     void loginIncorrectPassword() throws DataAccessException {
-        userDAO.createUser(new UserData("jack", Integer.toHexString("rightpass".hashCode()), "email"));
+        userDAO.createUser(new UserData("jack", BCrypt.hashpw("cs240test", BCrypt.gensalt()), "email"));
 
         assertThrows(AuthenticationException.class,
                 () -> userService.login("jack", "wrongpass"));
