@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
+import dataaccess.databaseimplementation.SQLAuthDAO;
 import dataaccess.databaseimplementation.SQLUserDAO;
 import dataaccess.databaseimplementation.SchemaInitializer;
 import dataaccess.memoryimplementation.*;
@@ -16,7 +17,7 @@ public class Server {
 
     private final Gson gson = new Gson();
 
-    private final AuthDAO authDAO = new InMemoryAuthDAO();
+    private final AuthDAO authDAO = new SQLAuthDAO();
     private final GameDAO gameDAO = new InMemoryGameDAO();
     private final UserDAO userDAO = new SQLUserDAO();
 
