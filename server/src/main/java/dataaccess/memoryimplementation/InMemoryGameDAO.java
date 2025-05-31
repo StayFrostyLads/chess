@@ -23,13 +23,14 @@ public class InMemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public int createGame(GameData game) {
+    public GameData createGame(String gameName) {
         int id = nextID++;
-        GameData withID = new GameData(id, game.whiteUsername(),
-                game.blackUsername(), game.gameName(), game.game()
+        ChessGame newGame = new ChessGame();
+        GameData gameData = new GameData(id, null,
+                null, gameName, newGame
         );
-        store.put(id, withID);
-        return id;
+        store.put(id, gameData);
+        return gameData;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class InMemoryGameDAO implements GameDAO {
             black = username;
         }
         GameData updatedData = new GameData(oldData.gameID(), white, black,
-                                            oldData.gameName(), oldData.game()
+                oldData.gameName(), oldData.game()
         );
         store.put(gameID, updatedData);
     }

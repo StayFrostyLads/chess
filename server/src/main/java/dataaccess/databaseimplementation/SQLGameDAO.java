@@ -4,6 +4,7 @@ import chess.ChessGame;
 import dataaccess.*;
 import json.JsonUtil;
 import model.GameData;
+import service.*;
 
 import java.sql.*;
 import java.util.*;
@@ -38,18 +39,20 @@ public class SQLGameDAO implements GameDAO {
     }
 
     @Override
-    public int createGame(GameData game) throws DataAccessException {
+    public GameData createGame(String gameName) throws DataAccessException {
         String sql = "INSERT INTO games (gameName, gameState) VALUES (?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, game.gameName());
-            stmt.setString(2, JsonUtil.toJson(game.game()));
+            ChessGame newGame = new ChessGame();
+            stmt.setString(1, gameName);
+            stmt.setString(2, JsonUtil.toJson(newGame));
             stmt.executeUpdate();
 
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1);
+                    int gameID = rs.getInt(1);
+                    return new GameData(gameID, null, null, gameName, newGame);
                 } else {
                     throw new DataAccessException("Failed to retrieve generated gameID.");
                 }
@@ -69,9 +72,9 @@ public class SQLGameDAO implements GameDAO {
                 if (rs.next()) {
                     return Optional.of(new GameData(
                             rs.getInt("gameID"),
-                            rs.getString("gameName"),
                             rs.getString("whiteUsername"),
                             rs.getString("blackUsername"),
+                            rs.getString("gameName"),
                             JsonUtil.fromJson(rs.getString("gameState"), ChessGame.class)
                     ));
                 }
@@ -84,20 +87,38 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void joinGame(int gameID, String username, ChessGame.TeamColor color) throws DataAccessException {
-        String sql = switch (color) {
-            case WHITE -> "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
-            case BLACK -> "UPDATE games SET blackUsername = ? WHERE gameID = ?";
-        };
+        String firstSQL = "SELECT whiteUsername, blackUsername FROM games WHERE gameID = ?";
+        String secondSQL;
 
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement checkStmt = conn.prepareStatement(firstSQL)) {
 
-            stmt.setString(1, username);
-            stmt.setInt(2, gameID);
-            int rows = stmt.executeUpdate();
-            if (rows == 0) {
-                throw new DataAccessException("No game found with ID " + gameID);
+            checkStmt.setInt(1, gameID);
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                if (!rs.next()) {
+                    throw new BadRequestException("The specified Game ID does not exist: " + gameID);
+                }
+
+                String white = rs.getString("whiteUsername");
+                String black = rs.getString("blackUsername");
+
+                if ((color == ChessGame.TeamColor.WHITE && white != null) ||
+                        (color == ChessGame.TeamColor.BLACK && black != null)) {
+                    throw new ForbiddenException("Color already taken by another player!");
+                }
             }
+
+            secondSQL = switch (color) {
+                case WHITE -> "UPDATE games SET whiteUsername = ? WHERE gameID = ?";
+                case BLACK -> "UPDATE games SET blackUsername = ? WHERE gameID = ?";
+            };
+
+            try (PreparedStatement updateStmt = conn.prepareStatement(secondSQL)) {
+                updateStmt.setString(1, username);
+                updateStmt.setInt(2, gameID);
+                updateStmt.executeUpdate();
+            }
+
         } catch (SQLException e) {
             throw new DataAccessException("Error joining game", e);
         }
@@ -115,9 +136,9 @@ public class SQLGameDAO implements GameDAO {
             while (rs.next()) {
                 games.add(new GameData(
                         rs.getInt("gameID"),
-                        rs.getString("gameName"),
                         rs.getString("whiteUsername"),
                         rs.getString("blackUsername"),
+                        rs.getString("gameName"),
                         JsonUtil.fromJson(rs.getString("gameState"), ChessGame.class)
                 ));
             }

@@ -2,6 +2,7 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.*;
+import dataaccess.databaseimplementation.*;
 import dataaccess.memoryimplementation.*;
 import model.*;
 import org.junit.jupiter.api.*;
@@ -20,17 +21,23 @@ public class JoinGameTest {
 
     @BeforeEach
     void setup() throws DataAccessException {
-        gameDAO = new InMemoryGameDAO();
-        authDAO = new InMemoryAuthDAO();
-        userDAO = new InMemoryUserDAO();
+        gameDAO = new SQLGameDAO();
+        authDAO = new SQLAuthDAO();
+        userDAO = new SQLUserDAO();
         authService = new AuthService(authDAO, gameDAO, userDAO);
         gameService = new GameService(gameDAO, authService);
 
+        authDAO.clear();
+        gameDAO.clear();
+        userDAO.clear();
+
+        UserData user = new UserData("jack", "cs240test", "jneb2004.byu.edu");
+        userDAO.createUser(user);
+
         validToken = authDAO.createAuth("jack").authToken();
 
-        GameData game = new GameData(0, "jack", null,
-                        "Test Game", new ChessGame());
-        gameID = gameDAO.createGame(game);
+        GameData game = gameDAO.createGame("Test Game");
+        gameID = game.gameID();
     }
 
     @Test

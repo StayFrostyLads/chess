@@ -15,17 +15,15 @@ public class GameService {
         this.authService = authService;
     }
 
-    public CreateGameResult createGame(String authToken, String gameName) {
+    public CreateGameResult createGame(String gameName, String authToken) {
         try {
             AuthData auth = authService.validateAuthToken(authToken);
             if (gameName == null || gameName.isBlank()) {
                 throw new BadRequestException("Game name can't be null or empty");
             }
-            GameData newGame = new GameData(0, null,
-                    null, gameName, new ChessGame()
-            );
-            int gameID = gameDAO.createGame(newGame);
-            return new CreateGameResult(gameID);
+            GameData newGame = gameDAO.createGame(gameName);
+            gameDAO.joinGame(newGame.gameID(), auth.username(), ChessGame.TeamColor.WHITE);
+            return new CreateGameResult(newGame.gameID());
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during game creation", e);
         }
@@ -34,15 +32,15 @@ public class GameService {
     public JoinGameResult joinGame(String authToken, int gameID, String playerColor) {
         try {
             AuthData auth = authService.validateAuthToken(authToken);
-            GameData game = gameDAO.getGame(gameID).orElseThrow(
-                    () -> new BadRequestException("Game not found: " + gameID)
-            );
             ChessGame.TeamColor color;
+
             try {
                 color = ChessGame.TeamColor.valueOf(playerColor.toUpperCase());
             } catch (Exception e) {
                 throw new BadRequestException("Invalid team color: " + playerColor);
             }
+
+            GameData game = gameDAO.getGame(gameID).orElseThrow(() -> new BadRequestException("Invalid game ID"));
 
             if (color == ChessGame.TeamColor.WHITE && game.whiteUsername() != null) {
                 throw new ForbiddenException("Someone is already playing as white!");

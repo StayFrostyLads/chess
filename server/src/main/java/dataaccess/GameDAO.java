@@ -7,7 +7,7 @@ import java.util.*;
 public interface GameDAO {
     void clear() throws DataAccessException;
     void addGame(GameData game) throws DataAccessException;
-    int createGame(GameData game) throws DataAccessException;
+    GameData createGame(String gameName) throws DataAccessException;
     Optional<GameData> getGame(int gameID) throws DataAccessException;
     void joinGame(int gameID, String username, ChessGame.TeamColor color) throws DataAccessException;
     List<GameData> listGames() throws DataAccessException;
