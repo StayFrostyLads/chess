@@ -1,12 +1,12 @@
-package service;
+package dataaccess;
 
 import chess.ChessGame;
-import dataaccess.*;
 import dataaccess.databaseimplementation.SQLAuthDAO;
 import dataaccess.databaseimplementation.SQLGameDAO;
 import dataaccess.databaseimplementation.SQLUserDAO;
 import model.*;
 import org.junit.jupiter.api.*;
+import service.ForbiddenException;
 
 import java.util.List;
 import java.util.Optional;
@@ -228,7 +228,7 @@ public class SQLImplementationTest {
 
             gameDAO.joinGame(id, "liv", ChessGame.TeamColor.WHITE);
 
-            assertThrows(ForbiddenException.class,
+            Assertions.assertThrows(ForbiddenException.class,
                     () -> gameDAO.joinGame(id, "josh", ChessGame.TeamColor.WHITE),
                     "Expected ForbiddenException when Color Was Already Taken");
         }
