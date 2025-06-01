@@ -14,6 +14,27 @@ public class DatabaseManager {
      */
     static {
         loadPropertiesFromResources();
+        try (var propStream = Thread.currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream("db.properties")) {
+            if (propStream == null) {
+                throw new RuntimeException("Unable to load db.properties");
+            }
+            Properties props = new Properties();
+            props.load(propStream);
+
+            databaseName = props.getProperty("db.name");
+            dbUsername = props.getProperty("db.user");
+            dbPassword = props.getProperty("db.password");
+
+            var host = props.getProperty("db.host");
+            var port = Integer.parseInt(props.getProperty("db.port"));
+
+            connectionUrl = String.format("jdbc:mysql://%s:%d", host, port);
+        } catch (Exception ex) {
+            throw new RuntimeException("unable to process db.properties", ex);
+        }
+
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
@@ -25,7 +46,7 @@ public class DatabaseManager {
      * Creates the database if it does not already exist.
      */
     static public void createDatabase() throws DataAccessException {
-        var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
+        var statement = "CREATE DATABASE IF NOT EXISTS `" + databaseName + "`";
         try (var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
              var preparedStatement = conn.prepareStatement(statement)) {
             preparedStatement.executeUpdate();
@@ -49,7 +70,8 @@ public class DatabaseManager {
     static public Connection getConnection() throws DataAccessException {
         try {
             //do not wrap the following line with a try-with-resources
-            var conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
+            createDatabase();
+            Connection conn = DriverManager.getConnection(connectionUrl, dbUsername, dbPassword);
             conn.setCatalog(databaseName);
             return conn;
         } catch (SQLException ex) {

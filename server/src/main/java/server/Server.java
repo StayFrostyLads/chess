@@ -15,9 +15,10 @@ public class Server {
 
     private final Gson gson = new Gson();
 
+    private final UserDAO userDAO = new SQLUserDAO();
     private final AuthDAO authDAO = new SQLAuthDAO();
     private final GameDAO gameDAO = new SQLGameDAO();
-    private final UserDAO userDAO = new SQLUserDAO();
+
 
     private final AuthService authService = new AuthService(authDAO, gameDAO, userDAO);
     private final UserService userService = new UserService(userDAO, authDAO, authService);
