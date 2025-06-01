@@ -45,6 +45,13 @@ public class SQLImplementationTest {
             Exception ex = assertThrows(DataAccessException.class, () -> userDAO.createUser(user));
             assertTrue(ex.getMessage().toLowerCase().contains("already exists"));
         }
+
+        @Test
+        @DisplayName("Unsuccessfully Retrieve Non-Existent User")
+        void unsuccessfullyGetUser() throws DataAccessException {
+            Optional<UserData> falseData = userDAO.getUser("matthew");
+            assertTrue(falseData.isEmpty(), "getUser() should return empty for non-existent user");
+        }
     }
 
     @Nested
@@ -108,6 +115,13 @@ public class SQLImplementationTest {
 
             Optional<AuthData> authResult = authDAO.getAuth(token.authToken());
             assertTrue(authResult.isEmpty(), "Auth Token should be deleted due to foreign key cascade");
+        }
+
+        @Test
+        @DisplayName("Retrieving Non-existent Auth Token Returns Empty")
+        void unsuccessfullyGetAuth() throws DataAccessException {
+            Optional<AuthData> falseAuth = authDAO.getAuth("not-a-real-token");
+            assertTrue(falseAuth.isEmpty(), "getAuth() returns empty for a non-existent auth");
         }
     }
 
@@ -188,7 +202,7 @@ public class SQLImplementationTest {
         }
 
         @Test
-        @DisplayName("Unsuccessfully join game with invalid gameID")
+        @DisplayName("Unsuccessfully Join Game With Invalid GameID")
         void unsuccessfullyJoinGameBadID() {
             int falseID = 3283;
             DataAccessException ex =
@@ -197,6 +211,26 @@ public class SQLImplementationTest {
                             "Expecting DataAccessException to be thrown with invalid gameID");
             String message = ex.getMessage();
             assertTrue(message.contains("Invalid"), "Error message should mention invalid gameID");
+        }
+
+        @Test
+        @DisplayName("Unsuccessfully Retrieve Game Given An Invalid ID")
+        void unsuccessfullyGetGameInvalidID() throws DataAccessException {
+            Optional<GameData> falseID = gameDAO.getGame(3283);
+            assertTrue(falseID.isEmpty(), "getGame() on an invalid ID returns empty");
+        }
+
+        @Test
+        @DisplayName("Joining a game where color taken throws ForbiddenException")
+        void joinGameColorTaken() throws DataAccessException {
+            GameData newGame = gameDAO.createGame("Already Taken");
+            int id = newGame.gameID();
+
+            gameDAO.joinGame(id, "liv", ChessGame.TeamColor.WHITE);
+
+            assertThrows(ForbiddenException.class,
+                    () -> gameDAO.joinGame(id, "josh", ChessGame.TeamColor.WHITE),
+                    "Expected ForbiddenException when Color Was Already Taken");
         }
     }
 }
