@@ -26,13 +26,25 @@ public class SQLImplementationTest {
         private final UserDAO userDAO = new SQLUserDAO();
 
         @Test
-        @DisplayName("Successfully Create and Retrieve User")
-        void successfullyCreateAndRetrieve() throws DataAccessException {
+        @DisplayName("Successfully Create a User")
+        void successfullyCreateUser() throws DataAccessException {
             UserData user = new UserData("jack", "cs240test", "jneb2004@byu.edu");
             assertDoesNotThrow(() -> userDAO.createUser(user));
             Optional<UserData> testUser = userDAO.getUser("jack");
             assertTrue(testUser.isPresent());
-            assertEquals("jack", testUser.get().username());
+        }
+
+        @Test
+        @DisplayName("Successfully Retrieve a User")
+        void successfullyGetExistingUser() throws DataAccessException {
+            var user = new UserData("liv", "volleyball", "ogg@gmail.com");
+            userDAO.createUser(user);
+
+            Optional<UserData> possibleUser = userDAO.getUser("liv");
+            assertTrue(possibleUser.isPresent(),
+                    "getUser() should return a UserData object after creation");
+            assertEquals("liv", possibleUser.get().username());
+            assertEquals("ogg@gmail.com", possibleUser.get().email());
         }
 
         @Test
@@ -137,16 +149,30 @@ public class SQLImplementationTest {
         }
 
         @Test
-        @DisplayName("Successfully create and retrieve a game")
-        void successfullyCreateAndRetrieveGame() throws DataAccessException {
+        @DisplayName("Successfully Create A Game")
+        void successfullyCreateAGame() throws DataAccessException {
             GameData newGame = gameDAO.createGame("Test Game");
-            assertNotNull(newGame);
+            assertNotNull(newGame, "createGame() should not return null");
             assertEquals("Test Game", newGame.gameName());
+            assertTrue(newGame.gameID() > 0, "Returned gameID should be positive");
+            assertNull(newGame.whiteUsername());
+            assertNull(newGame.blackUsername());
+        }
 
-            Optional<GameData> testGame = gameDAO.getGame(newGame.gameID());
-            assertTrue(testGame.isPresent());
-            assertEquals(newGame.gameID(), testGame.get().gameID());
-            assertEquals("Test Game", testGame.get().gameName());
+        @Test
+        @DisplayName("Successfully Retrieve A Game")
+        void successfullyGetGame() throws DataAccessException {
+            GameData gameData = gameDAO.createGame("Test Game");
+            int id = gameData.gameID();
+
+            Optional<GameData> testGame = gameDAO.getGame(id);
+            assertTrue(testGame.isPresent(),
+                    "getGame() should properly return a GameData object given a valid ID");
+            GameData newData = testGame.get();
+            assertEquals(id, newData.gameID());
+            assertEquals("Test Game", newData.gameName());
+            assertNull(newData.whiteUsername());
+            assertNull(newData.blackUsername());
         }
 
         @Test
