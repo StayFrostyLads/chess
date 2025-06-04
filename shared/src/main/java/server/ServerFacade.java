@@ -187,17 +187,9 @@ public class ServerFacade {
         if (responseClass == null) {
             return null;
         }
-//        try (InputStream in = http.getInputStream()) {
-//            return new Gson().fromJson(new InputStreamReader(in), responseClass);
-//        }
-        String rawJson;
         try (InputStream in = http.getInputStream()) {
-            rawJson = new String(in.readAllBytes());
+            return new Gson().fromJson(new InputStreamReader(in), responseClass);
         }
-
-        // ─── DEBUG: print whatever the server actually returned ───
-        System.out.println("DEBUG /" + http.getURL().getPath() + " returned JSON: " + rawJson);
-        return new Gson().fromJson(rawJson, responseClass);
     }
 
     private boolean isSuccessful(int status) {
