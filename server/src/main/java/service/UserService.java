@@ -39,7 +39,7 @@ public class UserService {
 
             String authToken = authDAO.createAuth(username).authToken();
 
-            return new AuthResult(authToken, username);
+            return new AuthResult(true, authToken, username);
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during registration", e);
         }
@@ -65,7 +65,7 @@ public class UserService {
 
 
             AuthData auth = authDAO.createAuth(user.username());
-            return new AuthResult(auth.authToken(), user.username());
+            return new AuthResult(true, auth.authToken(), user.username());
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during login", e);
         }
@@ -89,7 +89,7 @@ public class UserService {
         return BCrypt.checkpw(plain, hashed);
     }
 
-    public record AuthResult(String authToken, String username) { }
+    public record AuthResult(boolean success, String authToken, String username) { }
     public record LogoutResult(boolean success, String message) { }
 
     public record RegisterRequest(String username, String password, String email) { }
