@@ -9,14 +9,18 @@ import static ui.EscapeSequences.*;
 public class ChessBoardPrinter {
 
     public static void printBoard(ChessBoard board) {
+        System.out.print(SET_BG_COLOR_BLUE);
         System.out.print("  ");
         for (char file = 'a'; file <= 'h'; file++) {
             System.out.print(" " + file + " ");
         }
+
+        System.out.print("  ");
+        System.out.print(RESET_BG_COLOR);
         System.out.println();
 
         for (int rank = 8; rank >= 1; rank--) {
-            System.out.print(rank + " ");
+            System.out.print(SET_BG_COLOR_BLUE + rank + " " + RESET_BG_COLOR);
 
             for (int fileIndex = 1; fileIndex <= 8; fileIndex++) {
                 boolean isLightSquare = ((rank + fileIndex) % 2 == 0);
@@ -24,23 +28,25 @@ public class ChessBoardPrinter {
 
                 System.out.print(backgroundColor);
 
-                ChessPosition position = new ChessPosition(rank, fileIndex);
-                ChessPiece piece = board.getPiece(position);
+                ChessPosition pos = new ChessPosition(rank, fileIndex);
+                ChessPiece piece = board.getPiece(pos);
+                String symbol = unicodeForChessPiece(piece);
 
-                String pieceSymbol = unicodeForChessPiece(piece);
-
-                System.out.print(pieceSymbol);
+                System.out.print(symbol);
                 System.out.print(RESET_BG_COLOR);
             }
 
-            System.out.print(" " + rank);
+            System.out.print(SET_BG_COLOR_BLUE + " " + rank + RESET_BG_COLOR);
             System.out.println();
         }
 
+        System.out.print(SET_BG_COLOR_BLUE);
         System.out.print("  ");
         for (char file = 'a'; file <= 'h'; file++) {
             System.out.print(" " + file + " ");
         }
+        System.out.print("  ");
+        System.out.print(RESET_BG_COLOR);
         System.out.println();
 
         System.out.print(RESET_TEXT_COLOR);
