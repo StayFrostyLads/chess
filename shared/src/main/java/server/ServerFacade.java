@@ -132,6 +132,7 @@ public class ServerFacade {
         if (requestObj != null) {
             http.setRequestProperty("Content-Type", "application/json");
             String json = new Gson().toJson(requestObj);
+            System.out.println("DEBUG: sending JSON → " + json);
             try (OutputStream os = http.getOutputStream()) {
                 os.write(json.getBytes());
             }
@@ -186,9 +187,17 @@ public class ServerFacade {
         if (responseClass == null) {
             return null;
         }
+//        try (InputStream in = http.getInputStream()) {
+//            return new Gson().fromJson(new InputStreamReader(in), responseClass);
+//        }
+        String rawJson;
         try (InputStream in = http.getInputStream()) {
-            return new Gson().fromJson(new InputStreamReader(in), responseClass);
+            rawJson = new String(in.readAllBytes());
         }
+
+        // ─── DEBUG: print whatever the server actually returned ───
+        System.out.println("DEBUG /" + http.getURL().getPath() + " returned JSON: " + rawJson);
+        return new Gson().fromJson(rawJson, responseClass);
     }
 
     private boolean isSuccessful(int status) {
@@ -225,13 +234,11 @@ public class ServerFacade {
 
     public record CreateGameRequest(String gameName) { }
 
-    public record CreateGameResult(boolean success, int gameID, String gameName,
-                                   String whiteUsername, String blackUsername) { }
+    public record CreateGameResult(boolean success, GameEntry game) { }
 
     public record JoinGameRequest(int gameID, String playerColor) { }
 
-    public record JoinGameResult(boolean success, int gameID, String assignedColor,
-                                 String whiteUsername, String blackUsername) { }
+    public record JoinGameResult(boolean success, GameEntry game) { }
 
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
 

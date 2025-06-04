@@ -37,7 +37,8 @@ public class JoinGameTest {
         validToken = authDAO.createAuth("jack").authToken();
 
         GameService.CreateGameResult createResult = gameService.createGame("Test Game", validToken);
-        gameID = createResult.gameID();
+        GameService.GameEntry gameEntry = createResult.game();
+        gameID = gameEntry.gameID();
     }
 
     @Test

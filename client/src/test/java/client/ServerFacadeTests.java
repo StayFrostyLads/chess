@@ -144,4 +144,43 @@ public class ServerFacadeTests {
                 "Attempting to list the games with no auth token should inform the user why they can't");
     }
 
+    @Test
+    @DisplayName("Successfully create a game")
+    void successfullyCreateGame() {
+        facade.register(new ServerFacade.RegisterRequest(username, password, email));
+        AuthResult auth = facade.login(new ServerFacade.LoginRequest(username, password));
+        facade.setAuthToken(auth.authToken());
+
+        CreateGameResult createGameResult = facade.createGame(new ServerFacade.CreateGameRequest("Test Game"));
+
+        assertTrue(createGameResult.success(), "Create game should return success if provided a valid name");
+        assertNotNull(createGameResult.game(), "The returned GameEntry shouldn't be null");
+
+        GameEntry gameEntry = createGameResult.game();
+        assertEquals("Test Game", gameEntry.gameName(), "Returned game name should match provided one");
+        assertTrue(gameEntry.gameID() > 0, "GameID should be a positive integer");
+        assertTrue(gameEntry.whiteUsername().isBlank(), "White player spot should be open");
+        assertTrue(gameEntry.blackUsername().isBlank(), "Black player spot should be open");
+    }
+
+    @Test
+    @DisplayName("Unsuccessfully create a game with no given game name")
+    void unsuccessfullyCreateGameInvalidName() {
+        facade.register(new ServerFacade.RegisterRequest(username, password, email));
+        AuthResult auth = facade.login(new ServerFacade.LoginRequest(username, password));
+        facade.setAuthToken(auth.authToken());
+
+        BadRequestException ex1 = assertThrows(BadRequestException.class,
+                () -> facade.createGame(new CreateGameRequest(null))
+        );
+        assertTrue(ex1.getMessage().toLowerCase().contains("missing"),
+                "User should be informed why their game failed to create");
+
+        BadRequestException ex2 = assertThrows(BadRequestException.class,
+                () -> facade.createGame(new CreateGameRequest(""))
+        );
+        assertTrue(ex1.getMessage().toLowerCase().contains("empty"),
+                "User should be informed why their game failed to create");
+    }
+
 }

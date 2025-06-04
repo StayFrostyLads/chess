@@ -35,19 +35,19 @@ public class CreateGameTest {
     void createGameSuccessfully() throws DataAccessException {
         String name = "Test Game";
         GameService.CreateGameResult result = gameService.createGame(name, validToken);
+        GameService.GameEntry gameEntry = result.game();
 
-        assertTrue(result.gameID() > 0, "gameID should have a positive value");
+        assertTrue(gameEntry.gameID() > 0, "gameID should have a positive value");
 
         List<GameData> gameList = gameDAO.listGames();
         assertEquals(1, gameList.size(),
                 "The DAO should have exactly 1 game stored right now");
         GameData store = gameList.getFirst();
-        assertEquals(result.gameID(), store.gameID());
+        assertEquals(gameEntry.gameID(), store.gameID());
         assertNull(store.whiteUsername());
         assertNull(store.blackUsername());
         assertEquals(name, store.gameName());
         assertNotNull(store.game(), "GameData in the database should contain a ChessGame instance");
-
     }
 
     @Test
