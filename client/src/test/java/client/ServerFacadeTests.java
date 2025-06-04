@@ -39,24 +39,12 @@ public class ServerFacadeTests {
     @BeforeEach
     public void clearDatabases() {
         facade.setAuthToken(null);
-        try {
-            facade.register(new ServerFacade.RegisterRequest(username, password, email));
-            AuthResult auth = facade.login(new ServerFacade.LoginRequest(username, password));
-            facade.setAuthToken(auth.authToken());
-            facade.clearDatabases();
-        } catch (AlreadyTakenException e) {
-            try {
-                AuthResult auth = facade.login(new ServerFacade.LoginRequest(username, password));
-                facade.setAuthToken(auth.authToken());
-                facade.clearDatabases();
-            } catch (Exception ignored) { }
-        } catch (Exception ignored) { }
-        facade.setAuthToken(null);
+        facade.clearDatabases();
     }
 
     @Test
     @DisplayName("Successfully register a new user")
-    void successfullyRegister() throws Exception {
+    void successfullyRegister() {
         AuthResult result = facade.register(new ServerFacade.RegisterRequest(username, password, email));
         assertTrue(result.success(), "Registration should have been successful");
         assertNotNull(result.authToken(), "Auth Token should not be null");

@@ -5,7 +5,6 @@ import dataaccess.*;
 import dataaccess.databaseimplementation.*;
 import dataaccess.memoryimplementation.*;
 import handler.*;
-import json.JsonUtil;
 import service.*;
 import spark.*;
 
@@ -60,7 +59,7 @@ public class Server {
 
             UserService.LogoutResult result = userService.logout(token);
             response.type("application/json");
-            return JsonUtil.toJson(result);
+            return gson.toJson(result);
         });
 
         // List Games
@@ -72,27 +71,27 @@ public class Server {
 
             GameService.ListGamesResult result = gameService.listGames(token);
             response.type("application/json");
-            return JsonUtil.toJson(result);
+            return gson.toJson(result);
         });
 
         // Create Game
         Spark.post("/game", (request, response) -> {
             String token = request.headers("Authorization");
-            GameService.CreateGameRequest body = JsonUtil.fromJson(request.body(), GameService.CreateGameRequest.class);
+            GameService.CreateGameRequest body = gson.fromJson(request.body(), GameService.CreateGameRequest.class);
             if (body == null || body.gameName() == null || body.gameName().isBlank()) {
                 throw new BadRequestException("Missing or empty gameName");
             }
 
             GameService.CreateGameResult result = gameService.createGame(body.gameName(), token);
             response.type("application/json");
-            return JsonUtil.toJson(result);
+            return gson.toJson(result);
         });
 
         // Join Game
         Spark.put("/game", (request, response) -> {
             String token = request.headers("Authorization");
 
-            GameService.JoinGameRequest body = JsonUtil.fromJson(request.body(), GameService.JoinGameRequest.class);
+            GameService.JoinGameRequest body = gson.fromJson(request.body(), GameService.JoinGameRequest.class);
             if (body == null) {
                 throw new BadRequestException("Missing request body");
             }
@@ -105,11 +104,12 @@ public class Server {
 
             GameService.JoinGameResult result = gameService.joinGame(token, body.gameID(), body.playerColor());
             response.type("application/json");
-            return JsonUtil.toJson(result);
+            return gson.toJson(result);
         });
 
         // Clear Databases
         Spark.delete("/db", clearHandler::handleRequest);
+
         Spark.get("/error", this::throwError);
 
         Spark.exception(Exception.class, this::errorHandler);

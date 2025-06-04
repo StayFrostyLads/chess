@@ -9,7 +9,6 @@ import java.net.*;
 public class ServerFacade {
 
     private final String serverUrl;
-    private final Gson gson = new Gson();
     
     private String authToken;
 
@@ -93,7 +92,7 @@ public class ServerFacade {
                 "/db",
                 null,
                 ClearResult.class,
-                /* includeAuthHeader= */ true
+                /* includeAuthHeader= */ false
         );
     }
 
@@ -185,9 +184,6 @@ public class ServerFacade {
 
     private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
         if (responseClass == null) {
-            return null;
-        }
-        if (http.getContentLength() < 0) {
             return null;
         }
         try (InputStream in = http.getInputStream()) {

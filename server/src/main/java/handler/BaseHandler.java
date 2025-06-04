@@ -1,11 +1,14 @@
 package handler;
 
-import json.JsonUtil;
+import com.google.gson.Gson;
 import spark.*;
 import java.util.function.Function;
 
 // Q is request, A is response
 public class BaseHandler<Q, A> {
+
+    private final Gson gson = new Gson();
+
     private final Function<Q, A> serviceFunction;
     private final Class<Q> requestClass;
 
@@ -23,9 +26,9 @@ public class BaseHandler<Q, A> {
      * a handler and DAO method: handler:handleRequest
      */
     public Object handleRequest(Request req, Response res) {
-        Q requestObj = JsonUtil.fromJson(req.body(), requestClass);
+        Q requestObj = gson.fromJson(req.body(), requestClass);
         A resultObj = serviceFunction.apply(requestObj);
         res.type("application/json");
-        return JsonUtil.toJson(resultObj);
+        return gson.toJson(resultObj);
     }
 }

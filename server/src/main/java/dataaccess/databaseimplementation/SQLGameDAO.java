@@ -2,7 +2,7 @@ package dataaccess.databaseimplementation;
 
 import chess.ChessGame;
 import dataaccess.*;
-import json.JsonUtil;
+import com.google.gson.Gson;
 import model.GameData;
 import service.*;
 
@@ -10,6 +10,8 @@ import java.sql.*;
 import java.util.*;
 
 public class SQLGameDAO implements GameDAO {
+
+    private final Gson gson = new Gson();
 
     @Override
     public void clear() throws DataAccessException {
@@ -30,7 +32,7 @@ public class SQLGameDAO implements GameDAO {
             stmt.setString(2, game.gameName());
             stmt.setString(3, game.whiteUsername());
             stmt.setString(4, game.blackUsername());
-            stmt.setString(5, JsonUtil.toJson(game.game()));
+            stmt.setString(5, gson.toJson(game.game()));
 
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -46,7 +48,7 @@ public class SQLGameDAO implements GameDAO {
 
             ChessGame newGame = new ChessGame();
             stmt.setString(1, gameName);
-            stmt.setString(2, JsonUtil.toJson(newGame));
+            stmt.setString(2, gson.toJson(newGame));
             stmt.executeUpdate();
 
             try (ResultSet rs = stmt.getGeneratedKeys()) {
@@ -75,7 +77,7 @@ public class SQLGameDAO implements GameDAO {
                             rs.getString("whiteUsername"),
                             rs.getString("blackUsername"),
                             rs.getString("gameName"),
-                            JsonUtil.fromJson(rs.getString("gameState"), ChessGame.class)
+                            gson.fromJson(rs.getString("gameState"), ChessGame.class)
                     ));
                 }
             }
@@ -169,7 +171,7 @@ public class SQLGameDAO implements GameDAO {
                         rs.getString("whiteUsername"),
                         rs.getString("blackUsername"),
                         rs.getString("gameName"),
-                        JsonUtil.fromJson(rs.getString("gameState"), ChessGame.class)
+                        gson.fromJson(rs.getString("gameState"), ChessGame.class)
                 ));
             }
         } catch (SQLException e) {
