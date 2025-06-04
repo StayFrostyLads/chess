@@ -132,7 +132,6 @@ public class ServerFacade {
         if (requestObj != null) {
             http.setRequestProperty("Content-Type", "application/json");
             String json = new Gson().toJson(requestObj);
-            System.out.println("DEBUG: sending JSON → " + json);
             try (OutputStream os = http.getOutputStream()) {
                 os.write(json.getBytes());
             }
