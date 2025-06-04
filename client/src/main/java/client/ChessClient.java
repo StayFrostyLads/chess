@@ -163,19 +163,27 @@ public class ChessClient {
             return "Invalid game number. Please select a valid game number given by \"list\".";
         }
 
-        String color = params[1].toUpperCase();
-        if (!color.equals("WHITE") && !color.equals("BLACK")) {
-            return "Invalid color. Please use either WHITE or BLACK.";
-        }
-
         var selectedGame = listedGames.get(index);
         int gameID = selectedGame.gameID();
-        var request = new ServerFacade.JoinGameRequest(gameID, color);
-        var result = server.joinGame(request);
+        boolean playerIsWhite = selectedGame.whiteUsername() != null && selectedGame.whiteUsername().equals(username);
+        boolean playerIsBlack = selectedGame.blackUsername() != null && selectedGame.blackUsername().equals(username);
 
-        if (!result.success()) {
-            return "Failed to join the specified game: server refused. " +
-                    "Check if the player slot is already taken or if you are already in the game!";
+        String color = params[1].toUpperCase();
+        if (playerIsWhite || playerIsBlack) {
+            color = playerIsWhite ? "WHITE" : "BLACK";
+        } else {
+            if (!color.equals("WHITE") && !color.equals("BLACK")) {
+                return "Invalid color. Please use either WHITE or BLACK.";
+            }
+        }
+
+        if (!playerIsWhite && !playerIsBlack) {
+            var request = new ServerFacade.JoinGameRequest(gameID, color);
+            var result = server.joinGame(request);
+            if (!result.success()) {
+                return "Failed to join the specified game: server refused. " +
+                        "Check if the player slot is already taken or if you are already in the game!";
+            }
         }
 
         ChessBoard board = new ChessBoard();
@@ -185,8 +193,17 @@ public class ChessClient {
         boolean whitePerspective = color.equals("WHITE");
         ChessBoardPrinter.printBoard(board, whitePerspective);
 
-        return String.format("You successfully joined \"%s\" (ID=%d) as %s.",
-                selectedGame.gameName(), index + 1, color);
+        if (playerIsWhite || playerIsBlack) {
+            return String.format(
+                    "You have rejoined the game \"%s\" (ID=%d) as %s.  (Board printed above)",
+                    selectedGame.gameName(), index + 1, color
+            );
+        } else {
+            return String.format("You successfully joined \"%s\" (ID=%d) as %s.  (Board printed above)",
+                    selectedGame.gameName(), index + 1, color);
+        }
+
+
 
     }
 
