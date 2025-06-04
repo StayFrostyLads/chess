@@ -119,4 +119,29 @@ public class ServerFacadeTests {
                 "Attempting to logout with no auth token should inform the user why they can't logout");
     }
 
+    @Test
+    @DisplayName("Successfully list an empty list of games")
+    void successfullyListGamesEmpty() {
+        facade.register(new ServerFacade.RegisterRequest(username, password, email));
+        AuthResult auth = facade.login(new ServerFacade.LoginRequest(username, password));
+        facade.setAuthToken(auth.authToken());
+
+        ListGamesResult listGamesResult = facade.listGames();
+        assertTrue(listGamesResult.success(), "listGames() should return successful");
+        assertNotNull(listGamesResult.games(), "Games should not be null");
+        assertEquals(0, listGamesResult.games().length, "There should be zero games listed");
+    }
+
+    @Test
+    @DisplayName("Unsuccessfully list games with no auth token")
+    void unsuccessfullyListGamesNoToken() {
+        facade.setAuthToken(null);
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                () -> facade.listGames()
+        );
+        assertTrue(ex.getMessage().toLowerCase().contains("missing"),
+                "Attempting to list the games with no auth token should inform the user why they can't");
+    }
+
 }

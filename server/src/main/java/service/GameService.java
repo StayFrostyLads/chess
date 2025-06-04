@@ -4,6 +4,7 @@ import chess.ChessGame;
 import dataaccess.*;
 import model.*;
 
+import java.util.Collections;
 import java.util.List;
 
 public class GameService {
@@ -74,18 +75,21 @@ public class GameService {
 
     public ListGamesResult listGames(String authToken) throws DataAccessException {
         authService.validateAuthToken(authToken);
-        List<GameData> games = gameDAO.listGames();
-        GameEntry[] entries = games.stream().map(game ->
+        List<GameData> listedGames = gameDAO.listGames();
+        if (listedGames == null) {
+            listedGames = Collections.emptyList();
+        }
+        GameEntry[] games = listedGames.stream().map(game ->
                 new GameEntry(game.gameID(),
                         game.gameName(),
                         game.whiteUsername(),
                         game.blackUsername())).toArray(GameEntry[]::new);
-        return new ListGamesResult(entries);
+        return new ListGamesResult(true, games);
     }
 
     public record CreateGameResult(int gameID) { }
     public record JoinGameResult() { }
-    public record ListGamesResult(GameEntry[] games) { }
+    public record ListGamesResult(boolean success, GameEntry[] games) { }
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
 
     public record CreateGameRequest(String gameName) { }

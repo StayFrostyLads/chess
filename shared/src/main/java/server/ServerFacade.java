@@ -235,7 +235,7 @@ public class ServerFacade {
 
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
 
-    public record ListGamesResult(boolean success, GameEntry[] entries) { }
+    public record ListGamesResult(boolean success, GameEntry[] games) { }
 
     public record ClearResult(boolean success, String message) { }
 
