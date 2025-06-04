@@ -85,7 +85,38 @@ public class ServerFacadeTests {
         );
         assertTrue(ex.getMessage().toLowerCase().contains("invalid"),
                 "Error message should mention authentication failure");
+    }
 
+    @Test
+    @DisplayName("Successfully logout with valid auth token")
+    void successfullyLogout() {
+        facade.register(new ServerFacade.RegisterRequest(username, password, email));
+        AuthResult auth = facade.login(new ServerFacade.LoginRequest(username, password));
+        facade.setAuthToken(auth.authToken());
+
+        LogoutResult logoutResult = facade.logout();
+        assertTrue(logoutResult.success(), "Logout should return true for success");
+        assertNotNull(logoutResult.message(), "Logout should return: User successfully logged out");
+
+        ServerFacade tempClient = new ServerFacade(url);
+        tempClient.setAuthToken(auth.authToken());
+        AuthenticationException ex = assertThrows(
+                AuthenticationException.class,
+                tempClient::listGames
+        );
+        assertTrue(ex.getMessage().toLowerCase().contains("invalid auth token"),
+                "After logging out, the old auth token should no longer work");
+    }
+
+    @Test
+    @DisplayName("Unsuccessfully logout due to a missing token")
+    void unsuccessfullyLogoutNoToken() {
+        facade.setAuthToken(null);
+        AuthenticationException ex = assertThrows(AuthenticationException.class,
+                () -> facade.logout()
+        );
+        assertTrue(ex.getMessage().toLowerCase().contains("missing"),
+                "Attempting to logout with no auth token should inform the user why they can't logout");
     }
 
 }
