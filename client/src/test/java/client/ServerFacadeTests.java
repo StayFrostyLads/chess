@@ -64,4 +64,28 @@ public class ServerFacadeTests {
         assertTrue(ex.getMessage().toLowerCase().contains("already taken"));
     }
 
+    @Test
+    @DisplayName("Successfully login with valid credentials")
+    void successfullyLogin() {
+        facade.register(new ServerFacade.RegisterRequest(username, password, email));
+
+        AuthResult loginResult = facade.login(new ServerFacade.LoginRequest(username, password));
+        assertTrue(loginResult.success(), "Login should succeed given valid credentials");
+        assertNotNull(loginResult.authToken(), "Login should have registered a new auth token");
+        assertEquals(username, loginResult.username());
+
+        facade.setAuthToken(null);
+    }
+
+    @Test
+    @DisplayName("Unsuccessfully login with invalid credentials")
+    void unsuccessfullyLogin() {
+        AuthenticationException ex = assertThrows(AuthenticationException.class,
+                () -> facade.login(new ServerFacade.LoginRequest("fakeuser", "libraryman"))
+        );
+        assertTrue(ex.getMessage().toLowerCase().contains("invalid"),
+                "Error message should mention authentication failure");
+
+    }
+
 }
