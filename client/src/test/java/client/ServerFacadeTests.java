@@ -1,5 +1,7 @@
 package client;
 
+import com.mysql.cj.log.Log;
+import model.UserData;
 import org.junit.jupiter.api.*;
 import server.Server;
 import server.ServerFacade;
@@ -179,8 +181,86 @@ public class ServerFacadeTests {
         BadRequestException ex2 = assertThrows(BadRequestException.class,
                 () -> facade.createGame(new CreateGameRequest(""))
         );
-        assertTrue(ex1.getMessage().toLowerCase().contains("empty"),
+        assertTrue(ex2.getMessage().toLowerCase().contains("empty"),
                 "User should be informed why their game failed to create");
+    }
+
+    @Test
+    @DisplayName("Successfully join a game")
+    void successfullyJoinGame() {
+        facade.register(new ServerFacade.RegisterRequest(username, password, email));
+        AuthResult auth1 = facade.login(new ServerFacade.LoginRequest(username, password));
+        facade.setAuthToken(auth1.authToken());
+
+        CreateGameResult createGameResult = facade.createGame(new CreateGameRequest("Join Game Test"));
+        GameEntry gameEntry = createGameResult.game();
+        int gameID = gameEntry.gameID();
+
+        JoinGameResult joinGameResult1 = facade.joinGame(new JoinGameRequest(gameID, "WHITE"));
+        GameEntry joinGameEntry1 = joinGameResult1.game();
+
+        facade.register(new ServerFacade.RegisterRequest(username2, password2, email2));
+        AuthResult auth2 = facade.login(new ServerFacade.LoginRequest(username2, password2));
+        facade.setAuthToken(auth2.authToken());
+
+        JoinGameResult joinGameResult2 = facade.joinGame(new JoinGameRequest(gameID, "BLACK"));
+        GameEntry joinGameEntry2 = joinGameResult2.game();
+
+        assertTrue(joinGameResult1.success(), "Jack should have joined the game successfully as white");
+        assertTrue(joinGameResult2.success(), "Liv should have joined the game successfully as black");
+        assertEquals(gameID, joinGameEntry1.gameID(), "Returned gameID should match the created gameID");
+        assertEquals(gameID, joinGameEntry2.gameID(), "Returned gameID should match the created gameID");
+        assertEquals(username, joinGameEntry1.whiteUsername(), "White player should be jack");
+        assertEquals(username2, joinGameEntry2.blackUsername(), "Black player should be liv");
+    }
+
+    @Test
+    @DisplayName("Unsuccessfully join a game due to a missing auth token, invalid gameID or invalid color")
+    void unsuccessfullyJoinGame() {
+        AuthResult jackRegisterAuth = facade.register(new RegisterRequest(username, password, email));
+        AuthResult jackAuth = facade.login(new LoginRequest(username, password));
+        facade.setAuthToken(jackAuth.authToken());
+
+        CreateGameResult createGameResult = facade.createGame(new CreateGameRequest("Join Game Test"));
+        int realGameID = createGameResult.game().gameID();
+
+        facade.setAuthToken(null);
+        AuthenticationException exAuth = assertThrows(AuthenticationException.class,
+                () -> facade.joinGame(new JoinGameRequest(realGameID, "WHITE"))
+        );
+        assertTrue(exAuth.getMessage().toLowerCase().contains("missing"),
+                "Missing token should yield AuthenticationException");
+
+        facade.setAuthToken(jackAuth.authToken());
+        BadRequestException exBadGameID = assertThrows(BadRequestException.class,
+                () -> facade.joinGame(new JoinGameRequest(-11, "WHITE"))
+        );
+        assertTrue(exBadGameID.getMessage().toLowerCase().contains("invalid"),
+                "Invalid game ID should yield BadRequestException");
+
+        BadRequestException exInvalidColor = assertThrows(BadRequestException.class,
+                () -> facade.joinGame(new JoinGameRequest(realGameID, "PURPLE"))
+        );
+        assertTrue(exInvalidColor.getMessage().toLowerCase().contains("invalid"),
+                "Invalid player color should yield BadRequestException");
+
+        AuthResult livRegisterAuth = facade.register(new RegisterRequest(username2, password2, email2));
+        AuthResult livAuth = facade.login(new LoginRequest(username2, password2));
+        facade.setAuthToken(livAuth.authToken());
+        facade.joinGame(new JoinGameRequest(realGameID, "BLACK"));
+
+        AuthResult joshRegisterAuth = facade.register(new RegisterRequest(
+                                                    "josh", "salmon", "valorant@gmail.com"));
+        AuthResult joshAuth = facade.login(new LoginRequest("josh", "salmon"));
+        facade.setAuthToken(joshAuth.authToken());
+
+        ForbiddenException exForbidden = assertThrows(ForbiddenException.class,
+                () -> facade.joinGame(new JoinGameRequest(realGameID, "BLACK"))
+        );
+        assertTrue(exForbidden.getMessage().toLowerCase().contains("already playing")
+                || exForbidden.getMessage().toLowerCase().contains("forbidden"),
+                "Attempting to join twice as black should yield ForbiddenException"
+                );
     }
 
 }
