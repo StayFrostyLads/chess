@@ -119,14 +119,25 @@ public class ChessClient {
     }
 
     private String createGame(String[] params) throws ResponseException {
-        if (params.length >= 1) {
-            String gameName = String.join(" ", params);
-            var request = new ServerFacade.CreateGameRequest(gameName);
-            var result = server.createGame(request);
-            var game = result.game();
-            return String.format("Created game \"%s\" (ID=%d).", game.gameName(), game.gameID());
+        if (params.length < 1) {
+            return "Expected format: create <NAME>";
         }
-        return "Expected format: create <NAME>";
+        String gameName = String.join(" ", params);
+        var request = new ServerFacade.CreateGameRequest(gameName);
+        var result = server.createGame(request);
+        var game = result.game();
+        int newGameID = game.gameID();
+
+        var listResult = server.listGames();
+        var gameEntry = listResult.games();
+        int index = -1;
+        for (int i = 0; i <gameEntry.length; i++) {
+            if (gameEntry[i].gameID() == newGameID) {
+                index = i;
+                break;
+            }
+        }
+        return String.format("Created game \"%s\" (ID=%d).", game.gameName(), index + 1);
     }
 
     private String listGames() throws ResponseException {
@@ -202,9 +213,6 @@ public class ChessClient {
             return String.format("You successfully joined \"%s\" (ID=%d) as %s.  (Board printed above)",
                     selectedGame.gameName(), index + 1, color);
         }
-
-
-
     }
 
     private String observeGame(String[] params) {
