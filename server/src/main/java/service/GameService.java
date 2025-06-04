@@ -17,17 +17,18 @@ public class GameService {
     }
 
     public CreateGameResult createGame(String gameName, String authToken) {
+        AuthData auth = authService.validateAuthToken(authToken);
+        if (gameName == null || gameName.isBlank()) {
+            throw new BadRequestException("Game name can't be null or empty");
+        }
+        GameData newGame;
         try {
-            AuthData auth = authService.validateAuthToken(authToken);
-            if (gameName == null || gameName.isBlank()) {
-                throw new BadRequestException("Game name can't be null or empty");
-            }
-            GameData newGame = gameDAO.createGame(gameName);
-            GameEntry entry = new GameEntry(newGame.gameID(), gameName, "", "");
-            return new CreateGameResult(true, entry);
+            newGame = gameDAO.createGame(gameName);
         } catch (DataAccessException e) {
             throw new ServerException("Database connection error during game creation", e);
         }
+        GameEntry entry = new GameEntry(newGame.gameID(), newGame.gameName(), "", "");
+        return new CreateGameResult(true, newGame.gameID(), entry);
     }
 
     public JoinGameResult joinGame(String authToken, int gameID, String playerColor) {
@@ -99,7 +100,8 @@ public class GameService {
         return new ListGamesResult(true, games);
     }
 
-    public record CreateGameResult(boolean success, GameEntry game) { }
+    public record CreateGameResult(boolean success, Integer gameID, GameEntry game) {
+    }
     public record JoinGameResult(boolean success, GameEntry game) { }
     public record ListGamesResult(boolean success, GameEntry[] games) { }
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }

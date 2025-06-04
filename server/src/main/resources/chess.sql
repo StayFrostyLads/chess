@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS auth (
 );
 
 CREATE TABLE IF NOT EXISTS games (
-    gameId INT PRIMARY KEY AUTO_INCREMENT,
-    gameName VARCHAR(100) NOT NULL,
-    whiteUsername VARCHAR(50),
-    blackUsername VARCHAR(50),
-    gameState TEXT NOT NULL,
+    gameID          INT PRIMARY KEY AUTO_INCREMENT,
+    gameName        VARCHAR(100) NOT NULL,
+    whiteUsername   VARCHAR(50),
+    blackUsername   VARCHAR(50),
+    gameState TEXT  NOT NULL,
     FOREIGN KEY (whiteUsername) REFERENCES users(username),
     FOREIGN KEY (blackUsername) REFERENCES users(username)
 )

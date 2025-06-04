@@ -42,13 +42,15 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public GameData createGame(String gameName) throws DataAccessException {
-        String sql = "INSERT INTO games (gameName, gameState) VALUES (?, ?)";
+        String sql = "INSERT INTO games (gameName, whiteUsername, blackUsername, gameState) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ChessGame newGame = new ChessGame();
             stmt.setString(1, gameName);
-            stmt.setString(2, gson.toJson(newGame));
+            stmt.setNull(2, Types.VARCHAR);
+            stmt.setNull(3, Types.VARCHAR);
+            stmt.setString(4, gson.toJson(newGame));
             stmt.executeUpdate();
 
             try (ResultSet rs = stmt.getGeneratedKeys()) {
