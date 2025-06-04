@@ -1,6 +1,8 @@
 package server;
 
 import com.google.gson.Gson;
+import exception.ResponseException;
+
 import java.io.*;
 import java.net.*;
 
@@ -110,7 +112,6 @@ public class ServerFacade {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
-
             http.setDoOutput(true);
 
             if (includeAuthHeader && authToken != null && !authToken.isBlank()) {
@@ -140,20 +141,29 @@ public class ServerFacade {
 
     private void throwIfNotSuccessful(HttpURLConnection http) throws IOException {
         int status = http.getResponseCode();
-        if (status / 100 != 2) {
-            String serverMessage = null;
-            try (InputStream err = http.getErrorStream()) {
-                if (err != null) {
-                    @SuppressWarnings("unchecked")
-                    var map = (java.util.Map<String, Object>)
-                            new Gson().fromJson(new InputStreamReader(err), java.util.Map.class);
-                    serverMessage = (String) map.get("message");
+        if (!isSuccessful(status)) {
+            String raw;
+            try (InputStream errStream = http.getErrorStream()) {
+                if (errStream == null) {
+                    raw = "";
+                } else {
+                    raw = new String(errStream.readAllBytes());
                 }
             }
-            if (serverMessage == null) {
+            String serverMessage = null;
+            if (!raw.isBlank()) {
+                try {
+                    ResponseException rex = ResponseException.fromJson(
+                            new ByteArrayInputStream(raw.getBytes())
+                    );
+                    serverMessage = rex.getMessage();
+                } catch (Exception parseEx) {
+                    serverMessage = raw.trim();
+                }
+            }
+            if (serverMessage == null || serverMessage.isEmpty()) {
                 serverMessage = "HTTP " + status;
             }
-
             switch (status) {
                 case 400:
                     throw new BadRequestException(serverMessage);
@@ -185,9 +195,8 @@ public class ServerFacade {
         }
     }
 
-    public static void main(String[] args) {
-        ServerFacade client = new ServerFacade("http://localhost:3307");
-
+    private boolean isSuccessful(int status) {
+        return status / 100 == 2;
     }
 
     public static class AuthenticationException extends RuntimeException {
