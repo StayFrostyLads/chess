@@ -8,7 +8,18 @@ import static ui.EscapeSequences.*;
 
 public class ChessBoardPrinter {
 
-    public static void printBoard(ChessBoard board) {
+    public static void printBoard(ChessBoard board, boolean whitePerspective) {
+        if (whitePerspective) {
+            printWhiteSide(board);
+        } else {
+            printBlackSide(board);
+        }
+    }
+
+    /**
+     * A helper for printing the board from white's perspective
+     */
+    public static void printWhiteSide(ChessBoard board) {
         System.out.print(SET_BG_COLOR_BLUE);
         System.out.print("  ");
         for (char file = 'a'; file <= 'h'; file++) {
@@ -23,17 +34,7 @@ public class ChessBoardPrinter {
             System.out.print(SET_BG_COLOR_BLUE + rank + " " + RESET_BG_COLOR);
 
             for (int fileIndex = 1; fileIndex <= 8; fileIndex++) {
-                boolean isLightSquare = ((rank + fileIndex) % 2 == 0);
-                String backgroundColor = isLightSquare ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_DARK_GREY;
-
-                System.out.print(backgroundColor);
-
-                ChessPosition pos = new ChessPosition(rank, fileIndex);
-                ChessPiece piece = board.getPiece(pos);
-                String symbol = unicodeForChessPiece(piece);
-
-                System.out.print(symbol);
-                System.out.print(RESET_BG_COLOR);
+                printBoardHelper(board, rank, fileIndex);
             }
 
             System.out.print(SET_BG_COLOR_BLUE + " " + rank + RESET_BG_COLOR);
@@ -50,6 +51,58 @@ public class ChessBoardPrinter {
         System.out.println();
 
         System.out.print(RESET_TEXT_COLOR);
+        System.out.print(RESET_BG_COLOR);
+    }
+
+    /**
+     * A helper for printing the board from black's perspective
+     */
+    public static void printBlackSide(ChessBoard board) {
+        System.out.print(SET_BG_COLOR_BLUE);
+        System.out.print("  ");
+        for (char file = 'h'; file >= 'a'; file--) {
+            System.out.print(" " + file + " ");
+        }
+
+        System.out.print("  ");
+        System.out.print(RESET_BG_COLOR);
+        System.out.println();
+
+        for (int rank = 1; rank <= 8; rank++) {
+            System.out.print(SET_BG_COLOR_BLUE + rank + " " + RESET_BG_COLOR);
+
+            for (int fileIndex = 8; fileIndex >= 1; fileIndex--) {
+                printBoardHelper(board, rank, fileIndex);
+            }
+
+            System.out.print(SET_BG_COLOR_BLUE + " " + rank + RESET_BG_COLOR);
+            System.out.println();
+        }
+
+        System.out.print(SET_BG_COLOR_BLUE);
+        System.out.print("  ");
+        for (char file = 'h'; file >= 'a'; file--) {
+            System.out.print(" " + file + " ");
+        }
+        System.out.print("  ");
+        System.out.print(RESET_BG_COLOR);
+        System.out.println();
+
+        System.out.print(RESET_TEXT_COLOR);
+        System.out.print(RESET_BG_COLOR);
+    }
+
+    private static void printBoardHelper(ChessBoard board, int rank, int fileIndex) {
+        boolean isLightSquare = ((rank + fileIndex) % 2 == 0);
+        String backgroundColor = isLightSquare ? SET_BG_COLOR_LIGHT_GREY : SET_BG_COLOR_DARK_GREY;
+
+        System.out.print(backgroundColor);
+
+        ChessPosition position = new ChessPosition(rank, fileIndex);
+        ChessPiece piece = board.getPiece(position);
+        String pieceSymbol = unicodeForChessPiece(piece);
+
+        System.out.print(pieceSymbol);
         System.out.print(RESET_BG_COLOR);
     }
 

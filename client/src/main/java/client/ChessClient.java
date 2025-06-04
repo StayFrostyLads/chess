@@ -3,10 +3,13 @@ package client;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import chess.ChessBoard;
 import exception.ResponseException;
 import server.ServerFacade;
+import ui.ChessBoardPrinter;
 
 public class ChessClient {
+
     private enum State {
         PRELOGIN,
         POSTLOGIN
@@ -20,6 +23,10 @@ public class ChessClient {
 
     public ChessClient(String url) {
         this.server = new ServerFacade(url);
+    }
+
+    public String getUsername() {
+        return this.username;
     }
 
     public String eval(String rawInput) {
@@ -166,13 +173,21 @@ public class ChessClient {
         var request = new ServerFacade.JoinGameRequest(gameID, color);
         var result = server.joinGame(request);
 
-        if (result.success()) {
-            return String.format("You successfully joined \"%s\" (ID=%d) as %s.",
-                                selectedGame.gameName(), gameID, color);
-        } else {
+        if (!result.success()) {
             return "Failed to join the specified game: server refused. " +
                     "Check if the player slot is already taken or if you are already in the game!";
         }
+
+        ChessBoard board = new ChessBoard();
+        board.resetBoard();
+        // will update to real game state later
+
+        boolean whitePerspective = color.equals("WHITE");
+        ChessBoardPrinter.printBoard(board, whitePerspective);
+
+        return String.format("You successfully joined \"%s\" (ID=%d) as %s.",
+                selectedGame.gameName(), index + 1, color);
+
     }
 
     private String observeGame(String[] params) {
@@ -198,6 +213,10 @@ public class ChessClient {
                     quit                        - Exit this program
                     """;
         }
+    }
+
+    public boolean isPostLogin() {
+        return this.state == State.POSTLOGIN;
     }
 
 }

@@ -43,6 +43,11 @@ public class Repl {
     }
 
     private void printPrompt() {
-        System.out.print(SET_TEXT_COLOR_GREEN + ">>> " + RESET_TEXT_COLOR);
+        if (client.isPostLogin()) {
+            System.out.print(SET_TEXT_COLOR_GREEN + "LOGGED IN AS [" + client.getUsername() + "] >>>" + RESET_TEXT_COLOR);
+        } else {
+            System.out.print(SET_TEXT_COLOR_MAGENTA + "PRELOGIN >>> " + RESET_TEXT_COLOR);
+        }
+
     }
 }
