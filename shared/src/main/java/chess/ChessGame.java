@@ -74,7 +74,7 @@ public class ChessGame {
      * Deep clone helper
      *
      * @param original The original board to be copied
-     * @param copy The deep copy of the board
+     * @param copy     The deep copy of the board
      */
     private void cloneBoard(ChessBoard original, ChessBoard copy) {
         for (int row = 1; row <= 8; row++) {

@@ -116,7 +116,7 @@ public class Server {
 
             int gameID;
             try {
-                gameID = Integer.parseInt(request.params("gameID"));
+                gameID = Integer.parseInt(request.params("id"));
             } catch (NumberFormatException ex) {
                 throw new BadRequestException("Invalid game ID format");
             }

@@ -156,14 +156,8 @@ public class ChessClient {
 
         var listResult = server.listGames();
         var gameEntry = listResult.games();
-        int index = -1;
-        for (int i = 0; i <gameEntry.length; i++) {
-            if (gameEntry[i].gameID() == newGameID) {
-                index = i;
-                break;
-            }
-        }
-        return String.format("Created game \"%s\" (ID=%d).", game.gameName(), index + 1);
+
+        return String.format("Created game \"%s\".", game.gameName());
     }
 
     private String listGames() {
@@ -257,9 +251,22 @@ public class ChessClient {
 
         int realGameID = listedGames.get(index).gameID();
 
-        ChessBoard board = new ChessBoard();
+        ServerFacade.ObserveGameResult observeResult;
+        try {
+            observeResult = server.observeGame(realGameID);
+        } catch (RuntimeException e) {
+            return e.getMessage();
+        }
+
+        if (!observeResult.success()) {
+            return "Observe failed: " + observeResult.message();
+        }
+
+        ChessGame liveGame = observeResult.game();
+
+        ChessBoard board = liveGame.getBoard();
         ChessBoardPrinter.printBoard(board, true);
-        return "Board was printed above, you are now spectating game: " +  index + 1 + ".";
+        return "Board was printed above, you are now spectating game: " + listedGames.get(index).gameName() + ".";
     }
 
     public String help() {
