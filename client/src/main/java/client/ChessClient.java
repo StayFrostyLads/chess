@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import chess.ChessBoard;
+import chess.ChessGame;
 import exception.ResponseException;
 import server.ServerFacade;
 import ui.ChessBoardPrinter;
@@ -241,7 +242,24 @@ public class ChessClient {
     }
 
     private String observeGame(String[] params) {
-        return "Need to implement observe in ServerFacade still";
+        if (params.length != 1) {
+            return "Expected format: observe <ID>";
+        }
+        int index;
+        try {
+            index = Integer.parseInt(params[0]) - 1;
+        } catch (NumberFormatException nf) {
+            return "Invalid input for game number. Please type a valid integer shown by \"list\".";
+        }
+        if (index < 0 || index >= listedGames.size()) {
+            return "Invalid game number. Please select a valid game number shown by \"list\".";
+        }
+
+        int realGameID = listedGames.get(index).gameID();
+
+        ChessBoard board = new ChessBoard();
+        ChessBoardPrinter.printBoard(board, true);
+        return "Board was printed above, you are now spectating game: " +  index + 1 + ".";
     }
 
     public String help() {

@@ -100,12 +100,31 @@ public class GameService {
         return new ListGamesResult(true, games);
     }
 
+    public ObserveGameResult observeGame(String authToken, int gameID) {
+        AuthData auth = authService.validateAuthToken(authToken);
+
+        GameData data;
+        try {
+            data = gameDAO.getGame(gameID).orElseThrow(
+                    () -> new BadRequestException("Game ID: " + gameID + " does not exist."));
+        } catch (DataAccessException e) {
+            throw new ServerException("Database connection error while trying to observe game", e);
+        }
+
+        ChessGame currentState = data.game();
+
+        return new ObserveGameResult(true, currentState, null);
+    }
+
     public record CreateGameResult(boolean success, Integer gameID, GameEntry game) {
     }
     public record JoinGameResult(boolean success, GameEntry game) { }
     public record ListGamesResult(boolean success, GameEntry[] games) { }
+    public record ObserveGameResult(boolean success, ChessGame game, String message) { }
+
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
 
     public record CreateGameRequest(String gameName) { }
     public record JoinGameRequest(int gameID, String playerColor) { }
+
 }

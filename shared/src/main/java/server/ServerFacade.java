@@ -1,5 +1,6 @@
 package server;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import exception.ResponseException;
 
@@ -82,6 +83,17 @@ public class ServerFacade {
                 "/game",
                 request,
                 JoinGameResult.class,
+                /* includeAuthHeader= */ true
+        );
+    }
+
+    public ObserveGameResult observeGame(int gameID) {
+        String path = "/game/" + gameID;
+        return makeRequest(
+                "GET",
+                path,
+                null,
+                ObserveGameResult.class,
                 /* includeAuthHeader= */ true
         );
     }
@@ -216,25 +228,16 @@ public class ServerFacade {
     }
 
     public record RegisterRequest(String username, String password, String email) { }
-
     public record LoginRequest(String username, String password) { }
-
     public record AuthResult(boolean success, String authToken, String username) { }
-
     public record LogoutResult(boolean success, String message) { }
-
     public record CreateGameRequest(String gameName) { }
-
     public record CreateGameResult(boolean success, Integer gameID, GameEntry game) { }
-
     public record JoinGameRequest(int gameID, String playerColor) { }
-
     public record JoinGameResult(boolean success, GameEntry game) { }
-
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
-
     public record ListGamesResult(boolean success, GameEntry[] games) { }
-
+    public record ObserveGameResult(boolean success, ChessGame game, String message) { }
     public record ClearResult(boolean success, String message) { }
 
 }

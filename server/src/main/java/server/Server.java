@@ -107,6 +107,25 @@ public class Server {
             return gson.toJson(result);
         });
 
+        // Observe Game
+        Spark.get("/game/:id", (request, response) -> {
+            String token = request.headers("Authorization");
+            if (token == null || token.isBlank()) {
+                throw new AuthenticationException("Missing authToken");
+            }
+
+            int gameID;
+            try {
+                gameID = Integer.parseInt(request.params("gameID"));
+            } catch (NumberFormatException ex) {
+                throw new BadRequestException("Invalid game ID format");
+            }
+            GameService.ObserveGameResult observeGameResult = gameService.observeGame(token, gameID);
+
+            response.type("application/json");
+            return gson.toJson(observeGameResult);
+        });
+
         // Clear Databases
         Spark.delete("/db", clearHandler::handleRequest);
 
