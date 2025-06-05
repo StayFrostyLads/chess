@@ -155,7 +155,7 @@ public class Server {
 
         String body = gson.toJson(Map.of(
                 "success", false,
-                "message", String.format("Error %s", e.getMessage())
+                "message",  e.getMessage()
         ));
 
         response.status(statusCode);

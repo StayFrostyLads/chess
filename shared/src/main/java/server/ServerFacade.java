@@ -225,7 +225,7 @@ public class ServerFacade {
 
     public record CreateGameRequest(String gameName) { }
 
-    public record CreateGameResult(boolean success, GameEntry game) { }
+    public record CreateGameResult(boolean success, Integer gameID, GameEntry game) { }
 
     public record JoinGameRequest(int gameID, String playerColor) { }
 

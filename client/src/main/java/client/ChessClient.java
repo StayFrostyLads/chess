@@ -60,38 +60,63 @@ public class ChessClient {
                 case "register" -> register(params);
                 default -> "Unknown command, Type \"help\" for a list of commands.";
             };
-        } catch (ResponseException ex) {
+        } catch (RuntimeException ex) {
             return ex.getMessage();
         }
     }
 
-    private String login(String[] params) throws ResponseException {
-        if (params.length == 2) {
-            String username = params[0];
-            String password = params[1];
-            var result = server.login(new ServerFacade.LoginRequest(username, password));
-            this.authToken = result.authToken();
-            this.username = username;
-            server.setAuthToken(this.authToken);
-            this.state = State.POSTLOGIN;
-            return "Login successful. Welcome to Jack's Chess Client, " + username + "!";
+    private String login(String[] params) {
+        if (params.length != 2) {
+            return "Expected format: login <USERNAME> <PASSWORD>";
         }
-        return "Expected format: login <USERNAME> <PASSWORD>";
+        String username = params[0];
+        String password = params[1];
+        ServerFacade.AuthResult result;
+        try {
+            result = server.login(new ServerFacade.LoginRequest(username, password));
+        } catch (ServerFacade.AuthenticationException e) {
+            String message = e.getMessage();
+            if (message.toLowerCase().contains("invalid username")) {
+                return "Login failed: no user exists with the name \"" + username + "\".";
+            } else if (message.toLowerCase().contains("invalid password")) {
+                return "Login failed: incorrect password for user \"" + username + "\".";
+            } else {
+                return "Login failed: " + message;
+            }
+        } catch (ServerFacade.ServerException e) {
+            return "Login failed (server error): " + e.getMessage();
+        }
+
+        this.authToken = result.authToken();
+        this.username = username;
+        server.setAuthToken(this.authToken);
+        this.state = State.POSTLOGIN;
+        return "Login successful. Welcome to Jack's Chess Client, " + username + "!";
+
     }
 
-    private String register(String[] params) throws ResponseException {
-        if (params.length == 3) {
-            String username = params[0];
-            String password = params[1];
-            String email = params[2];
-            var result = server.register(new ServerFacade.RegisterRequest(username, password, email));
-            this.authToken = result.authToken();
-            this.username = username;
-            server.setAuthToken(this.authToken);
-            this.state = State.POSTLOGIN;
-            return "Registration successful. You are now logged in as " + username + ".";
+    private String register(String[] params) {
+        if (params.length != 3) {
+            return "Expected format: register <USERNAME> <PASSWORD> <EMAIL>";
         }
-        return "Expected format: register <USERNAME> <PASSWORD> <EMAIL>";
+        String username = params[0];
+        String password = params[1];
+        String email = params[2];
+        ServerFacade.AuthResult result;
+        try {
+            result = server.register(new ServerFacade.RegisterRequest(username, password, email));
+        } catch (ServerFacade.AlreadyTakenException e) {
+            return "Register failed, the username: " + username + " is already taken!";
+        } catch (ServerFacade.ServerException e) {
+            return "Register failed (server error): " + e.getMessage();
+        }
+
+        this.authToken = result.authToken();
+        this.username = username;
+        server.setAuthToken(this.authToken);
+        this.state = State.POSTLOGIN;
+        return "Registration successful. You are now logged in as " + username + ".";
+
     }
 
     private String handlePostlogin(String command, String[] params) {
@@ -104,12 +129,12 @@ public class ChessClient {
                 case "observe" -> observeGame(params);
                 default -> "Unknown command, Type \"help\" for a list of commands.";
             };
-        } catch (ResponseException ex) {
+        } catch (RuntimeException ex) {
             return ex.getMessage();
         }
     }
 
-    private String logout() throws ResponseException {
+    private String logout() {
         server.logout();
         this.authToken = null;
         this.username = null;
@@ -118,7 +143,7 @@ public class ChessClient {
         return "Logged out. Returning to the Prelogin UI! Play again soon!";
     }
 
-    private String createGame(String[] params) throws ResponseException {
+    private String createGame(String[] params) {
         if (params.length < 1) {
             return "Expected format: create <NAME>";
         }
@@ -140,7 +165,7 @@ public class ChessClient {
         return String.format("Created game \"%s\" (ID=%d).", game.gameName(), index + 1);
     }
 
-    private String listGames() throws ResponseException {
+    private String listGames() {
         var result = server.listGames();
         var gameEntry = result.games();
         if (gameEntry == null || gameEntry.length == 0) {
@@ -160,7 +185,7 @@ public class ChessClient {
         return sb.toString();
     }
 
-    private String joinGame(String[] params) throws ResponseException {
+    private String joinGame(String[] params) {
         if (params.length != 2) {
             return "Expected format: join <ID> <WHITE|BLACK>";
         }
