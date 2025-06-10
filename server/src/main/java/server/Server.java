@@ -23,8 +23,8 @@ public class Server {
     private final UserService userService = new UserService(userDAO, authDAO, authService);
     private final GameService gameService = new GameService(gameDAO, authService);
 
-    private final BaseHandler<UserService.RegisterRequest, UserService.AuthResult> registerHandler = new BaseHandler<>(
-            request -> userService.register(request.username(), request.password(),
+    private final BaseHandler<UserService.RegisterRequest, UserService.AuthResult> registerHandler =
+            new BaseHandler<>(request -> userService.register(request.username(), request.password(),
                     request.email()), UserService.RegisterRequest.class);
 
     private final BaseHandler<UserService.LoginRequest, UserService.AuthResult> loginHandler = new BaseHandler<>(
