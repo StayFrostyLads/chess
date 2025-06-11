@@ -148,6 +148,11 @@ public class GameService {
             throw new ForbiddenException("Observers may not make a move!");
         }
 
+        if (game.isGameOver()) {
+            return new MakeMoveResult(false, game, null,
+                                    false, false, "Game is already over!");
+        }
+
         if (game.isInCheckmate(WHITE) || game.isInCheckmate(BLACK) ||
                 game.isInStalemate(WHITE) || game.isInStalemate(BLACK)) {
             return new MakeMoveResult(false, game, null, false,
@@ -197,6 +202,31 @@ public class GameService {
                 throw new ServerException("Database connection error while trying to leave the game", e);
             }
         }
+    }
+
+    public void resignGame(String authToken, int gameID) throws DataAccessException {
+        AuthData auth = authService.validateAuthToken(authToken);
+        String username = auth.username();
+
+        GameData gameData = gameDAO.getGame(gameID).orElseThrow(
+                () -> new BadRequestException("Game ID: " + gameID + " does not exist!")
+        );
+
+        ChessGame game = gameData.game();
+
+        if (game.isGameOver()) {
+            throw new BadRequestException("Game is already over!");
+        }
+
+        if (!username.equals(gameData.whiteUsername()) && !username.equals(gameData.blackUsername())) {
+            throw new ForbiddenException("Only players can resign!");
+        }
+
+
+        game.setGameOver(true);
+        game.setWinner(username.equals(gameData.whiteUsername()) ? BLACK : WHITE);
+        gameDAO.saveGame(gameID, game);
+
     }
 
     public record CreateGameRequest(String gameName) { }

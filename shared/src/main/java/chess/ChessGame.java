@@ -15,11 +15,29 @@ public class ChessGame {
 
     private ChessBoard board;
     private TeamColor team;
+    private boolean gameOver = false;
+    private TeamColor winner = null;
 
     public ChessGame() {
         this.board = new ChessBoard();
         this.board.resetBoard();
         this.team = TeamColor.WHITE;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public void setWinner(TeamColor winner) {
+        this.winner = winner;
+    }
+
+    public TeamColor getWinner() {
+        return winner;
     }
 
     /**

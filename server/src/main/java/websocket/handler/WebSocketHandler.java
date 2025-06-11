@@ -156,8 +156,17 @@ public class WebSocketHandler {
                 .forEach(s -> send(s, notification));
     }
 
-    private void handleResign(Session session, ResignCommand command) {
-        return;
+    private void handleResign(Session session, ResignCommand command) throws DataAccessException {
+        try {
+            gameService.resignGame(command.getAuthToken(), command.getGameID());
+        } catch (Exception e) {
+            send(session, new ServerMessage.Error("Error resigning: " + e.getMessage()));
+            return;
+        }
+
+        String username = authDAO.getAuth(command.getAuthToken()).orElseThrow().username();
+        ServerMessage.Notification notification = new ServerMessage.Notification(username + " resigned");
+        broadcast(command.getGameID(), notification);
     }
 
     private void send(Session otherSession, ServerMessage serverMessage) {
