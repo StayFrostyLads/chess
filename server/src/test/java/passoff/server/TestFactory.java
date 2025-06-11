@@ -1,6 +1,13 @@
 package passoff.server;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonObject;
+import com.google.gson.TypeAdapterFactory;
+import websocket.commands.UserGameCommand.*;
+import websocket.commands.UserGameCommand;
+import websocket.messages.ServerMessage;
+import websocket.messages.ServerMessage.*;
 
 public class TestFactory {
 
@@ -33,7 +40,32 @@ public class TestFactory {
          * or deserialize chess objects like ChessMove, you may add type adapters here.
          */
         GsonBuilder builder = new GsonBuilder();
-        // builder.registerTypeAdapter(ChessMove.class, /*type adapter or json serializer */);
+        builder.registerTypeAdapter(UserGameCommand.class, (JsonDeserializer<UserGameCommand>)
+                (json, typeOfT, context) -> {
+            JsonObject object = json.getAsJsonObject();
+            CommandType kind =
+                    CommandType.valueOf(object.get("commandType").getAsString());
+
+            return switch (kind) {
+                case CONNECT   -> context.deserialize(object, ConnectCommand.class);
+                case MAKE_MOVE -> context.deserialize(object, MakeMoveCommand.class);
+                case LEAVE     -> context.deserialize(object, LeaveCommand.class);
+                case RESIGN    -> context.deserialize(object, ResignCommand.class);
+            };
+        });
+        
+        builder.registerTypeAdapter(ServerMessage.class, (JsonDeserializer<ServerMessage>)
+                (json, typeOfT, context) -> {
+            JsonObject object = json.getAsJsonObject();
+            ServerMessageType kind =
+                    ServerMessageType.valueOf(object.get("serverMessageType").getAsString());
+
+            return switch (kind) {
+                case LOAD_GAME    -> context.deserialize(object, LoadGame.class);
+                case ERROR        -> context.deserialize(object, ServerMessage.Error.class);
+                case NOTIFICATION -> context.deserialize(object, Notification.class);
+            };
+        });
         return builder;
     }
 

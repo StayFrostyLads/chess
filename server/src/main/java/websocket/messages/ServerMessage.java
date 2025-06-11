@@ -1,5 +1,7 @@
 package websocket.messages;
 
+import chess.ChessGame;
+
 import java.util.Objects;
 
 /**
@@ -8,8 +10,8 @@ import java.util.Objects;
  * Note: You can add to this class, but you should not alter the existing
  * methods.
  */
-public class ServerMessage {
-    ServerMessageType serverMessageType;
+public abstract class ServerMessage {
+    private final ServerMessageType serverMessageType;
 
     public enum ServerMessageType {
         LOAD_GAME,
@@ -17,7 +19,7 @@ public class ServerMessage {
         NOTIFICATION
     }
 
-    public ServerMessage(ServerMessageType type) {
+    protected ServerMessage(ServerMessageType type) {
         this.serverMessageType = type;
     }
 
@@ -40,5 +42,44 @@ public class ServerMessage {
     @Override
     public int hashCode() {
         return Objects.hash(getServerMessageType());
+    }
+
+    public static class LoadGame extends ServerMessage {
+        private final ChessGame game;
+
+        public LoadGame(ChessGame game) {
+            super(ServerMessageType.LOAD_GAME);
+            this.game = game;
+        }
+
+        public ChessGame getGame() {
+            return game;
+        }
+    }
+
+    public static class Error extends ServerMessage {
+        private final String errorMessage;
+
+        public Error(String message) {
+            super(ServerMessageType.ERROR);
+            this.errorMessage = message;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+    }
+
+    public static class Notification extends ServerMessage {
+        private final String notification;
+
+        public Notification(String message) {
+            super(ServerMessageType.NOTIFICATION);
+            this.notification = message;
+        }
+
+        public String getNotification() {
+            return notification;
+        }
     }
 }
