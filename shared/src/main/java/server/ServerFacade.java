@@ -2,7 +2,6 @@ package server;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
-import exception.ResponseException;
 
 import java.io.*;
 import java.net.*;
@@ -152,29 +151,20 @@ public class ServerFacade {
 
     private void throwIfNotSuccessful(HttpURLConnection http) throws IOException {
         int status = http.getResponseCode();
-        if (!isSuccessful(status)) {
-            String raw;
-            try (InputStream errStream = http.getErrorStream()) {
-                if (errStream == null) {
-                    raw = "";
-                } else {
-                    raw = new String(errStream.readAllBytes());
-                }
-            }
+        if (status / 100 != 2) {
             String serverMessage = null;
-            if (!raw.isBlank()) {
-                try {
-                    ResponseException rex = ResponseException.fromJson(
-                            new ByteArrayInputStream(raw.getBytes())
-                    );
-                    serverMessage = rex.getMessage();
-                } catch (Exception parseEx) {
-                    serverMessage = raw.trim();
+            try (InputStream err = http.getErrorStream()) {
+                if (err != null) {
+                    @SuppressWarnings("unchecked")
+                    var map = (java.util.Map<String, Object>)
+                            new Gson().fromJson(new InputStreamReader(err), java.util.Map.class);
+                    serverMessage = (String) map.get("message");
                 }
             }
-            if (serverMessage == null || serverMessage.isEmpty()) {
+            if (serverMessage == null) {
                 serverMessage = "HTTP " + status;
             }
+
             switch (status) {
                 case 400:
                     throw new BadRequestException(serverMessage);

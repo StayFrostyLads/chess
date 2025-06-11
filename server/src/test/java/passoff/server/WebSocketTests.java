@@ -2,12 +2,13 @@ package passoff.server;
 
 import chess.*;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.TestFactory;
 import passoff.model.*;
 import passoff.websocket.*;
 import server.Server;
 import websocket.commands.UserGameCommand;
+import websocket.commands.UserGameCommand.*;
 import websocket.messages.ServerMessage;
+import websocket.messages.ServerMessage.*;
 
 import java.net.URISyntaxException;
 import java.util.*;
@@ -37,7 +38,7 @@ public class WebSocketTests {
 
         serverFacade = new TestServerFacade("localhost", port);
         serverFacade.clear();
-        environment = new WebsocketTestingEnvironment("localhost", port, "/ws", org.junit.jupiter.api.TestFactory.getGsonBuilder());
+        environment = new WebsocketTestingEnvironment("localhost", port, "/ws", TestFactory.getGsonBuilder());
         waitTime = TestFactory.getMessageTime();
     }
 
@@ -310,7 +311,7 @@ public class WebSocketTests {
         Map<String, Integer> numExpectedMessages = expectedMessages(sender, 1, inGame, (expectSuccess ? 1 : 0), otherClients);
         Map<String, List<TestMessage>> actualMessages = environment.exchange(sender.username(), connectCommand, numExpectedMessages, waitTime);
 
-        assertCommandMessages(actualMessages, expectSuccess, sender, types(ServerMessageType.LOAD_GAME), inGame, types(ServerMessageType.NOTIFICATION), otherClients, description);
+        assertCommandMessages(actualMessages, expectSuccess, sender, types(ServerMessage.ServerMessageType.LOAD_GAME), inGame, types(ServerMessage.ServerMessageType.NOTIFICATION), otherClients, description);
     }
 
     private void makeMove(WebsocketUser sender, int gameID, ChessMove move, boolean expectSuccess, boolean extraNotification,

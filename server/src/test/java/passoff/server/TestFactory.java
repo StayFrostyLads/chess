@@ -3,7 +3,6 @@ package passoff.server;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonObject;
-import com.google.gson.TypeAdapterFactory;
 import websocket.commands.UserGameCommand.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;

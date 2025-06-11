@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import chess.ChessBoard;
 import chess.ChessGame;
-import exception.ResponseException;
 import server.ServerFacade;
 import ui.ChessBoardPrinter;
 

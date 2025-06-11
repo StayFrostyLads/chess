@@ -71,15 +71,15 @@ public abstract class ServerMessage {
     }
 
     public static class Notification extends ServerMessage {
-        private final String notification;
+        private final String message;
 
         public Notification(String message) {
             super(ServerMessageType.NOTIFICATION);
-            this.notification = message;
+            this.message = message;
         }
 
         public String getNotification() {
-            return notification;
+            return message;
         }
     }
 }
