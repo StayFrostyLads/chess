@@ -1,5 +1,6 @@
 package websocket.handler;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import handler.ExceptionHandler;
 import websocket.messages.ServerMessage;
@@ -87,18 +88,24 @@ public class WebSocketHandler {
             return;
         }
 
-        var game = result.game();
+        ChessGame game = result.game();
+        ChessGame.TeamColor role = result.playerRole();
+
+        String side;
+        if (role == ChessGame.TeamColor.WHITE) {
+            side = "white";
+        } else if (role == ChessGame.TeamColor.BLACK) {
+            side = "black";
+        } else {
+            side = "observer";
+        }
 
         sessions.addSessionToGame(command.getGameID(), session);
         send(session, new ServerMessage.LoadGame(game));
 
         String user = authToken.get().username();
-        String role = switch (result.playerRole()) {
-            case WHITE -> "white";
-            case BLACK -> "black";
-            default -> "observer";
-        };
-        var notification = new ServerMessage.Notification(user + " joined as " + role);
+
+        var notification = new ServerMessage.Notification(user + " joined as " + side);
         sessions.getSessionsForGame(command.getGameID()).stream()
                 .filter(s -> !s.equals(session)).forEach(s -> send(s, notification));
     }
