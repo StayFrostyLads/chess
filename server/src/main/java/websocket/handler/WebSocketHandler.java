@@ -12,6 +12,7 @@ import websocket.commands.UserGameCommand.*;
 import dataaccess.databaseimplementation.*;
 import dataaccess.*;
 import service.*;
+import service.GameService.*;
 
 import java.io.IOException;
 
@@ -110,8 +111,32 @@ public class WebSocketHandler {
                 .filter(s -> !s.equals(session)).forEach(s -> send(s, notification));
     }
 
-    private void handleMakeMove(Session session, MakeMoveCommand command) {
-        return;
+    private void handleMakeMove(Session session, MakeMoveCommand command) throws DataAccessException {
+        MakeMoveResult moveResult = gameService.makeMove(command.getAuthToken(), command.getGameID(),
+                                                        command.getMove());
+
+        if (!moveResult.success()) {
+            send(session, new ServerMessage.Error(moveResult.message()));
+            return;
+        }
+
+        ServerMessage.LoadGame load = new ServerMessage.LoadGame(moveResult.game());
+        broadcast(command.getGameID(), load);
+
+        ServerMessage.Notification moveNotification = new ServerMessage.Notification(moveResult.notification());
+        sessions.getSessionsForGame(command.getGameID()).stream()
+                                    .filter(s -> ! s.equals(session))
+                                    .forEach(s -> send(s, moveNotification));
+
+        if (moveResult.isCheckmate()) {
+            String winner = moveResult.game().getTeamTurn().other().name();
+            broadcast(command.getGameID(),
+                    new ServerMessage.Notification("Checkmate! " + winner + " has won the game!"));
+        } else if (moveResult.isCheck()) {
+            String inCheck = moveResult.game().getTeamTurn().name();
+            broadcast(command.getGameID(), new ServerMessage.Notification("Player " + inCheck + " is in check!"));
+        }
+
     }
 
     private void handleLeave(Session session, LeaveCommand command) {
@@ -130,5 +155,9 @@ public class WebSocketHandler {
             System.out.println("There was an IO error: " + e.getMessage());
             sessions.removeSession(otherSession);
         }
+    }
+
+    private void broadcast(int gameID, ServerMessage serverMessage) {
+        sessions.getSessionsForGame(gameID).forEach(session -> send(session, serverMessage));
     }
 }
