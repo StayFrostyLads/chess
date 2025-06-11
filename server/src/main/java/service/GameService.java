@@ -102,6 +102,7 @@ public class GameService {
 
     public ObserveGameResult observeGame(String authToken, int gameID) {
         AuthData auth = authService.validateAuthToken(authToken);
+        String username = auth.username();
 
         GameData data;
         try {
@@ -111,16 +112,25 @@ public class GameService {
             throw new ServerException("Database connection error while trying to observe game", e);
         }
 
+        ChessGame.TeamColor role;
+        if (username.equals(data.whiteUsername())) {
+            role = ChessGame.TeamColor.WHITE;
+        } else if (username.equals(data.blackUsername())) {
+            role = ChessGame.TeamColor.BLACK;
+        } else {
+            role = null; // observer
+        }
+
         ChessGame currentState = data.game();
 
-        return new ObserveGameResult(true, currentState, null);
+        return new ObserveGameResult(true, currentState, null, role);
     }
 
     public record CreateGameResult(boolean success, Integer gameID, GameEntry game) {
     }
     public record JoinGameResult(boolean success, GameEntry game) { }
     public record ListGamesResult(boolean success, GameEntry[] games) { }
-    public record ObserveGameResult(boolean success, ChessGame game, String message) { }
+    public record ObserveGameResult(boolean success, ChessGame game, String message, ChessGame.TeamColor playerRole) { }
 
     public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
 

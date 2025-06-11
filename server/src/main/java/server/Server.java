@@ -7,6 +7,7 @@ import dataaccess.memoryimplementation.*;
 import handler.*;
 import service.*;
 import spark.*;
+import websocket.handler.WebSocketHandler;
 
 import java.util.Map;
 
@@ -41,6 +42,8 @@ public class Server {
 
         // Initialize the database
         SchemaInitializer.initialize();
+
+        Spark.webSocket("/ws", WebSocketHandler.class);
 
         // Register your endpoints and handle exceptions here.
 
