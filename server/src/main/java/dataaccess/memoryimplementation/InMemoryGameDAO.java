@@ -61,4 +61,14 @@ public class InMemoryGameDAO implements GameDAO {
     public List<GameData> listGames() {
         return new ArrayList<>(store.values());
     }
+
+    @Override
+    public void saveGame(int gameID, ChessGame updatedGame) throws DataAccessException {
+        GameData oldData = store.get(gameID);
+        if (oldData == null) {
+            throw new DataAccessException("Cannot save non-existent game! " + gameID);
+        }
+        store.put(gameID, new GameData(gameID, oldData.whiteUsername(),
+                oldData.blackUsername(), oldData.gameName(), updatedGame));
+    }
 }

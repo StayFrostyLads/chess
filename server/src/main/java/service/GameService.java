@@ -163,7 +163,7 @@ public class GameService {
             game.makeMove(move);
         } catch (InvalidMoveException e) {
             return new MakeMoveResult(false, game, null, false,
-                        false, e.getMessage());
+                        false, "Illegal move: " + e.getMessage());
         }
 
         try {
