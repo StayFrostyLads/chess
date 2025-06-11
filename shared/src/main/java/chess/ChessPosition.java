@@ -47,4 +47,10 @@ public class ChessPosition {
     public int getColumn() {
         return col;
     }
+
+    public String toAlgebraic() {
+        char file = (char) ('a' + (col - 1));
+        int rank = row;
+        return "" + file + rank;
+    }
 }

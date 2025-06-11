@@ -183,6 +183,23 @@ public class SQLGameDAO implements GameDAO {
         return games;
     }
 
+    @Override
+    public void saveGame(int gameID, ChessGame updatedGame) throws DataAccessException {
+        String json = gson.toJson(updatedGame);
+
+        String sql = "UPDATE games SET gameState = ? WHERE gameID = ?";
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, json);
+            stmt.setInt(2, gameID);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataAccessException("Error saving game state", e);
+        }
+
+    }
+
 
 
 

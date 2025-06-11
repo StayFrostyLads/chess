@@ -1,11 +1,15 @@
 package service;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import dataaccess.*;
 import model.*;
 
 import java.util.Collections;
 import java.util.List;
+
+import static chess.ChessGame.TeamColor.*;
 
 public class GameService {
     private final GameDAO gameDAO;
@@ -49,12 +53,12 @@ public class GameService {
             throw new ServerException("Database connection error while retrieving game data", e);
         }
 
-        if (color == ChessGame.TeamColor.WHITE) {
+        if (color == WHITE) {
             if (game.whiteUsername() != null && !game.whiteUsername().isBlank()) {
                 throw new ForbiddenException("Someone is already playing as white!");
             }
             try {
-                gameDAO.joinGame(gameID, auth.username(), ChessGame.TeamColor.WHITE);
+                gameDAO.joinGame(gameID, auth.username(), WHITE);
             } catch (DataAccessException e) {
                 throw new ServerException("Database connection error while joining as white", e);
             }
@@ -63,7 +67,7 @@ public class GameService {
                 throw new ForbiddenException("Someone is already playing as black!");
             }
             try {
-                gameDAO.joinGame(gameID, auth.username(), ChessGame.TeamColor.BLACK);
+                gameDAO.joinGame(gameID, auth.username(), BLACK);
             } catch (DataAccessException e) {
                 throw new ServerException("Database connection error while joining as black", e);
             }
@@ -114,9 +118,9 @@ public class GameService {
 
         ChessGame.TeamColor role;
         if (username.equals(data.whiteUsername())) {
-            role = ChessGame.TeamColor.WHITE;
+            role = WHITE;
         } else if (username.equals(data.blackUsername())) {
-            role = ChessGame.TeamColor.BLACK;
+            role = BLACK;
         } else {
             role = null; // observer
         }
@@ -126,15 +130,73 @@ public class GameService {
         return new ObserveGameResult(true, currentState, null, role);
     }
 
-    public record CreateGameResult(boolean success, Integer gameID, GameEntry game) {
-    }
-    public record JoinGameResult(boolean success, GameEntry game) { }
-    public record ListGamesResult(boolean success, GameEntry[] games) { }
-    public record ObserveGameResult(boolean success, ChessGame game, String message, ChessGame.TeamColor playerRole) { }
+    public MakeMoveResult makeMove(String authToken, int gameID, ChessMove move) throws DataAccessException {
+        AuthData auth = authService.validateAuthToken(authToken);
+        String username = auth.username();
 
-    public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
+        GameData gameData = gameDAO.getGame(gameID).orElseThrow(
+                () -> new BadRequestException("Game ID " + gameID + " does not exist"));
+
+        ChessGame game = gameData.game();
+
+        ChessGame.TeamColor playerColor;
+        if (username.equals(gameData.whiteUsername())) {
+            playerColor = WHITE;
+        } else if (username.equals(gameData.blackUsername())) {
+            playerColor = BLACK;
+        } else {
+            throw new ForbiddenException("Observers may not make a move!");
+        }
+
+        if (game.isInCheckmate(WHITE) || game.isInCheckmate(BLACK) ||
+                game.isInStalemate(WHITE) || game.isInStalemate(BLACK)) {
+            return new MakeMoveResult(false, game, null, false,
+                        false, "Game is already over!");
+        }
+
+        if (game.getTeamTurn() != playerColor) {
+            return new MakeMoveResult(false, game, null, false,
+                        false, "It is not currently " + playerColor + "'s turn to move!");
+        }
+
+        try {
+            game.makeMove(move);
+        } catch (InvalidMoveException e) {
+            return new MakeMoveResult(false, game, null, false,
+                        false, e.getMessage());
+        }
+
+        try {
+            gameDAO.saveGame(gameID, game);
+        } catch (DataAccessException e) {
+            throw new ServerException("Failed to save move", e);
+        }
+
+        String notification = String.format("%s moved %s to %s", username,
+                                            move.getStartPosition().toAlgebraic(),
+                                            move.getEndPosition().toAlgebraic());
+
+        ChessGame.TeamColor opponent = playerColor.other();
+        boolean check = game.isInCheck(opponent);
+        boolean checkmate = game.isInCheckmate(opponent);
+
+        return new MakeMoveResult(true, game, notification, check, checkmate, null);
+    }
 
     public record CreateGameRequest(String gameName) { }
+    public record CreateGameResult(boolean success, Integer gameID, GameEntry game) { }
+
     public record JoinGameRequest(int gameID, String playerColor) { }
+    public record JoinGameResult(boolean success, GameEntry game) { }
+
+    public record ListGamesResult(boolean success, GameEntry[] games) { }
+
+    public record ObserveGameResult(boolean success, ChessGame game, String message, ChessGame.TeamColor playerRole) { }
+
+    public record MakeMoveRequest(String authToken, int gameID, ChessMove move) { }
+    public record MakeMoveResult(boolean success, ChessGame game, String notification,
+                                 boolean isCheck, boolean isCheckmate, String message) { }
+    public record GameEntry(int gameID, String gameName, String whiteUsername, String blackUsername) { }
+
 
 }
