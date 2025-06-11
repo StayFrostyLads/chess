@@ -183,6 +183,22 @@ public class GameService {
         return new MakeMoveResult(true, game, notification, check, checkmate, null);
     }
 
+    public void leaveGame(String authToken, int gameID) throws DataAccessException {
+        AuthData auth = authService.validateAuthToken(authToken);
+        String username = auth.username();
+
+        GameData gameData = gameDAO.getGame(gameID).orElseThrow(
+                () -> new BadRequestException("Game ID: " + gameID + " does not exist!"));
+
+        if (username.equals(gameData.whiteUsername()) || username.equals(gameData.blackUsername())) {
+            try {
+                gameDAO.leaveGame(gameID, username);
+            } catch (DataAccessException e) {
+                throw new ServerException("Database connection error while trying to leave the game", e);
+            }
+        }
+    }
+
     public record CreateGameRequest(String gameName) { }
     public record CreateGameResult(boolean success, Integer gameID, GameEntry game) { }
 

@@ -3,6 +3,7 @@ package websocket.handler;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import handler.ExceptionHandler;
+import model.AuthData;
 import websocket.messages.ServerMessage;
 import websocket.server.GsonFactory;
 import org.eclipse.jetty.websocket.api.Session;
@@ -139,8 +140,20 @@ public class WebSocketHandler {
 
     }
 
-    private void handleLeave(Session session, LeaveCommand command) {
-        return;
+    private void handleLeave(Session session, LeaveCommand command) throws DataAccessException {
+        try {
+            gameService.leaveGame(command.getAuthToken(), command.getGameID());
+        } catch (Exception e) {
+            send(session, new ServerMessage.Error("Error leaving the game: " + e.getMessage()));
+            return;
+        }
+        sessions.removeSession(session);
+
+        String username = authDAO.getAuth(command.getAuthToken()).orElseThrow().username();
+        ServerMessage.Notification notification = new ServerMessage.Notification(username + " has left the game");
+        sessions.getSessionsForGame(command.getGameID()).stream()
+                .filter(s -> !s.equals(session))
+                .forEach(s -> send(s, notification));
     }
 
     private void handleResign(Session session, ResignCommand command) {

@@ -12,4 +12,5 @@ public interface GameDAO {
     void joinGame(int gameID, String username, ChessGame.TeamColor color) throws DataAccessException;
     List<GameData> listGames() throws DataAccessException;
     void saveGame(int gameID, ChessGame updatedGame) throws DataAccessException;
+    void leaveGame(int gameID, String username) throws DataAccessException;
 }

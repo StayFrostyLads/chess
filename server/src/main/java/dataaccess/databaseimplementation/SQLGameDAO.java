@@ -197,10 +197,40 @@ public class SQLGameDAO implements GameDAO {
         } catch (SQLException e) {
             throw new DataAccessException("Error saving game state", e);
         }
-
     }
 
+    @Override
+    public void leaveGame(int gameID, String username) throws DataAccessException {
+        String sql = "SELECT whiteUsername, blackUsername FROM games WHERE gameID = ?";
+        String whiteUserSQL = "UPDATE games SET whiteUsername = NULL WHERE gameID = ?";
+        String blackUserSQL = "UPDATE games SET blackUsername = NULL WHERE gameID = ?";
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
 
+            stmt.setInt(1, gameID);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new DataAccessException("Invalid game ID: " + gameID);
+                }
+                String white = resultSet.getString("whiteUsername");
+                String black = resultSet.getString("blackUsername");
 
+                if (username.equals(white)) {
+                    try (PreparedStatement updatedStmt = connection.prepareStatement(whiteUserSQL)) {
+                        updatedStmt.setInt(1, gameID);
+                        updatedStmt.executeUpdate();
+                    }
+                } else if (username.equals(black)) {
+                    try (PreparedStatement updatedStmt = connection.prepareStatement(blackUserSQL)) {
+                        updatedStmt.setInt(1, gameID);
+                        updatedStmt.executeUpdate();
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Error leaving the game", e);
+        }
+    }
 
 }

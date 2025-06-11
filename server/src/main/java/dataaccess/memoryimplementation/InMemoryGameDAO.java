@@ -71,4 +71,22 @@ public class InMemoryGameDAO implements GameDAO {
         store.put(gameID, new GameData(gameID, oldData.whiteUsername(),
                 oldData.blackUsername(), oldData.gameName(), updatedGame));
     }
+
+    @Override
+    public void leaveGame(int gameID, String username) throws DataAccessException {
+        GameData oldData = store.get(gameID);
+        if (oldData == null) {
+            throw new DataAccessException("No such game exists with ID: " + gameID);
+        }
+        String white = oldData.whiteUsername();
+        String black = oldData.blackUsername();
+        if (username.equals(white)) {
+            white = null;
+        } else if (username.equals(black)) {
+            black = null;
+        } else {
+            return;
+        }
+        store.put(gameID, new GameData(gameID, white, black, oldData.gameName(), oldData.game()));
+    }
 }
