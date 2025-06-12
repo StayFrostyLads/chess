@@ -185,7 +185,32 @@ public class ChessClient {
                 return "You have left the game.";
             }
             case "highlight" -> {
-                return highlight(params);
+                if (params.length != 1) {
+                    return "Expected usage: highlight <e2>";
+                }
+                if (gameState == null) {
+                    return "No game to highlight.";
+                }
+
+                ChessPosition startPosition;
+                try {
+                    startPosition = ChessPosition.fromAlgebraic(params[0]);
+                } catch (IllegalArgumentException e) {
+                    return "Invalid square: " + e.getMessage();
+                }
+
+                Collection<ChessMove> legalMoves = gameState.validMoves(startPosition);
+                if (legalMoves == null || legalMoves.isEmpty()) {
+                    return "No legal moves for " + params[0];
+                }
+
+                Set<ChessPosition> highlights = legalMoves.stream().map(ChessMove::getEndPosition)
+                                                                        .collect(Collectors.toSet());
+
+                boolean whitePerspective = !isPlayer || playerColor.equals("WHITE");
+
+                ChessBoardPrinter.printWithHighlights(gameState.getBoard(), whitePerspective, highlights);
+                return "";
             }
             case "redraw" -> {
                 if (gameState == null) {
@@ -324,6 +349,7 @@ public class ChessClient {
         if (params.length != 1) {
             return "Expected format: observe <ID>";
         }
+
         int index;
         try {
             index = Integer.parseInt(params[0]) - 1;
@@ -334,7 +360,8 @@ public class ChessClient {
             return "Invalid game number. Please select a valid game number shown by \"list\".";
         }
 
-        int realGameID = listedGames.get(index).gameID();
+        var selectedGame = listedGames.get(index);
+        int realGameID   = selectedGame.gameID();
 
         ServerFacade.ObserveGameResult observeResult;
         try {
@@ -342,30 +369,39 @@ public class ChessClient {
         } catch (RuntimeException e) {
             return e.getMessage();
         }
-
         if (!observeResult.success()) {
             return "Observe failed: " + observeResult.message();
         }
 
-        ChessGame liveGame = observeResult.game();
-        ChessBoardPrinter.printBoard(liveGame.getBoard(), true);
-
+        ChessGame initial = observeResult.game();
+        this.gameState   = initial;
+        ChessBoardPrinter.printBoard(initial.getBoard(), true);
+        
         this.currentGameID = realGameID;
-        this.isPlayer      = false;
         this.inGame        = true;
-        this.playerColor   = null;
+        this.isPlayer      = false;
+        this.playerColor   = null;             
+        
+        URI webSocketURI = URI.create(baseURL.replaceFirst("^http", "ws") + "/ws");
+        webSocket = new WebSocketClientHelper(webSocketURI, authToken, currentGameID,
+                new WebSocketClientHelper.Listener() {
+                    @Override
+                    public void onLoadGame(ServerMessage.LoadGame message) {
+                        gameState = message.getGame();
+                        ChessBoardPrinter.printBoard(gameState.getBoard(), true);
+                    }
+                    @Override
+                    public void onNotification(ServerMessage.Notification message) {
+                        System.out.println(message.getNotification());
+                    }
+                    @Override
+                    public void onError(ServerMessage.Error message) {
+                        System.err.println("WebSocket error: " + message.getErrorMessage());
+                    }
+                }
+        );
 
-
-        gameState = liveGame;
-        return "You are now spectating game: " + listedGames.get(index).gameName() + ".";
-    }
-
-    private String highlight(String[] params) {
-        return "";
-    }
-
-    private String redraw() {
-        return "";
+        return "You are now spectating game: " + selectedGame.gameName() + ".";
     }
 
     public String help() {
