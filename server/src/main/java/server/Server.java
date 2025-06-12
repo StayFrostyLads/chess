@@ -50,10 +50,7 @@ public class Server {
 
         // Initialize the database
         SchemaInitializer.initialize();
-
         Spark.webSocket("/ws", WebSocketHandler.class);
-
-        // Register your endpoints and handle exceptions here.
 
         // Register
         Spark.post("/user", registerHandler::handleRequest);
@@ -130,7 +127,6 @@ public class Server {
         Spark.delete("/db", clearHandler::handleRequest);
 
         Spark.get("/error", this::throwError);
-
         Spark.exception(Exception.class, this::errorHandler);
         Spark.notFound((request, response) -> {
             response.type("application/json");
@@ -141,9 +137,6 @@ public class Server {
                             request.requestMethod(), request.pathInfo())
             ));
         });
-
-        //This line initializes the server and can be removed once you have a functioning endpoint 
-        Spark.init();
 
         Spark.awaitInitialization();
         return Spark.port();

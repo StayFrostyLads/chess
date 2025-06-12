@@ -82,9 +82,15 @@ public class UserGameCommand {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof MakeMoveCommand)) return false;
-            if (!super.equals(o)) return false;
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof MakeMoveCommand)) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
             MakeMoveCommand that = (MakeMoveCommand) o;
             return Objects.equals(move, that.move);
         }

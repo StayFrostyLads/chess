@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 @WebSocket
 public class WebSocketHandler {
-    private static final Gson gson = GsonFactory.websocketBuilder().create();
+    private final Gson gson = GsonFactory.websocketBuilder().create();
 
     private final AuthDAO authDAO = new SQLAuthDAO();
     private final GameDAO gameDAO = new SQLGameDAO();

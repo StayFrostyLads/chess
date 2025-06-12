@@ -443,8 +443,12 @@ public class ChessClient {
     }
 
     private boolean isWhitePerspective() {
-        if (!inGame)     return true;
-        if (!isPlayer)   return true;
+        if (!inGame) {
+            return true;
+        }
+        if (!isPlayer) {
+            return true;
+        }
         return "WHITE".equals(playerColor);
     }
 

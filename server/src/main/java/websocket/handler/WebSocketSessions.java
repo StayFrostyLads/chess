@@ -16,16 +16,6 @@ public class WebSocketSessions {
         sessionMap.computeIfAbsent(gameID, id -> ConcurrentHashMap.newKeySet()).add(session);
     }
 
-    public void removeSessionFromGame(int gameID, Session session) {
-        Set<Session> set = sessionMap.get(gameID);
-        if (set != null) {
-            set.remove(session);
-            if (set.isEmpty()) {
-                sessionMap.remove(gameID);
-            }
-        }
-    }
-
     /**
      * Removal from all games (typically onClose or onError)
      */
