@@ -166,7 +166,6 @@ public class ChessClient {
             pendingResign = false;
             if (command.equals("y") || command.equals("yes")) {
                 webSocket.sendResign();
-                inGame = false;
                 return "You have resigned.";
             } else {
                 return "Resign cancelled.";

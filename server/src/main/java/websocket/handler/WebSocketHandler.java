@@ -136,7 +136,7 @@ public class WebSocketHandler {
             broadcast(command.getGameID(),
                     new ServerMessage.Notification("Checkmate! " + winnerUsername + " has won the game!"));
         } else if (moveResult.isCheck()) {
-            ChessGame.TeamColor inCheckColor = moveResult.game().getTeamTurn().other();
+            ChessGame.TeamColor inCheckColor = moveResult.game().getTeamTurn();
             var data = gameDAO.getGame(command.getGameID()).orElseThrow();
             String inCheckUsername = (inCheckColor == ChessGame.TeamColor.WHITE) ?
                     data.whiteUsername() : data.blackUsername();

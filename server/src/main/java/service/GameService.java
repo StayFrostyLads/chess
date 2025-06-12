@@ -162,7 +162,7 @@ public class GameService {
             game.makeMove(move);
         } catch (InvalidMoveException e) {
             String error = String.format(
-                    "Illegal move by %s: %s  (%s)", playerColor, move, e.getMessage());
+                    "Illegal move by %s: %s ", playerColor, move);
             return new MakeMoveResult(false, game, null, false, false, error);
         }
 
