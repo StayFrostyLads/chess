@@ -30,10 +30,10 @@ public class ChessClient {
     private ChessGame gameState = null;
     private boolean inGame = false;
     private boolean isPlayer = false;
+    private boolean pendingResign = false;
     private String playerColor = null;
     private WebSocketClientHelper webSocket;
     private final String baseURL;
-    private final Gson gson = new Gson();
 
     public ChessClient(String url) {
         this.baseURL = url;
@@ -162,6 +162,17 @@ public class ChessClient {
     }
 
     private String handleInGame(String command, String[] params) {
+        if (pendingResign) {
+            pendingResign = false;
+            if (command.equals("y") || command.equals("yes")) {
+                webSocket.sendResign();
+                inGame = false;
+                return "You have resigned.";
+            } else {
+                return "Resign cancelled.";
+            }
+        }
+
         switch (command) {
             case "move" -> {
                 if (!isPlayer) {
@@ -175,9 +186,8 @@ public class ChessClient {
                 if (!isPlayer) {
                     return "Cannot resign, you are an observer.";
                 }
-                webSocket.sendResign();
-                inGame = false;
-                return "You have resigned.";
+                pendingResign = true;
+                return "Are you sure to you want to resign? (y/n)";
             }
             case "leave" -> {
                 webSocket.sendLeave();

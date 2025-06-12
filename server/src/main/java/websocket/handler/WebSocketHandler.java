@@ -129,12 +129,18 @@ public class WebSocketHandler {
                                     .forEach(s -> send(s, moveNotification));
 
         if (moveResult.isCheckmate()) {
-            String winner = moveResult.game().getTeamTurn().other().name();
+            ChessGame.TeamColor winnerColor = moveResult.game().getTeamTurn().other();
+            var data = gameDAO.getGame(command.getGameID()).orElseThrow();
+            String winnerUsername = (winnerColor == ChessGame.TeamColor.WHITE) ?
+                                    data.whiteUsername() : data.blackUsername();
             broadcast(command.getGameID(),
-                    new ServerMessage.Notification("Checkmate! " + winner + " has won the game!"));
+                    new ServerMessage.Notification("Checkmate! " + winnerUsername + " has won the game!"));
         } else if (moveResult.isCheck()) {
-            String inCheck = moveResult.game().getTeamTurn().name();
-            broadcast(command.getGameID(), new ServerMessage.Notification("Player " + inCheck + " is in check!"));
+            ChessGame.TeamColor inCheckColor = moveResult.game().getTeamTurn().other();
+            var data = gameDAO.getGame(command.getGameID()).orElseThrow();
+            String inCheckUsername = (inCheckColor == ChessGame.TeamColor.WHITE) ?
+                    data.whiteUsername() : data.blackUsername();
+            broadcast(command.getGameID(), new ServerMessage.Notification("Player " + inCheckUsername + " is in check!"));
         }
 
     }
