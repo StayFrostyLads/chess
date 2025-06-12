@@ -1,12 +1,6 @@
 package passoff.server;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonObject;
-import websocket.commands.UserGameCommand.*;
-import websocket.commands.UserGameCommand;
-import websocket.messages.ServerMessage;
-import websocket.messages.ServerMessage.*;
 import websocket.server.GsonFactory;
 
 public class TestFactory {

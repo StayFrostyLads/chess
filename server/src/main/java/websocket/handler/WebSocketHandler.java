@@ -3,7 +3,6 @@ package websocket.handler;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import handler.ExceptionHandler;
-import model.AuthData;
 import websocket.messages.ServerMessage;
 import websocket.server.GsonFactory;
 import org.eclipse.jetty.websocket.api.Session;

@@ -53,7 +53,7 @@ public class MakeMoveTest {
         GameService.MakeMoveResult moveResult = gameService.makeMove(whiteAuthToken, gameID, move);
 
         assertTrue(moveResult.success(),               "Move should succeed");
-        assertEquals("jack moved e2 to e4",       moveResult.notification());
+        assertEquals("jack moved e2→e4",       moveResult.notification());
         assertFalse(moveResult.isCheck(),              "Should not be check");
         assertFalse(moveResult.isCheckmate(),          "Should not be checkmate");
         assertEquals(TeamColor.BLACK,              moveResult.game().getTeamTurn(),
