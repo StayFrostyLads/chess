@@ -1,17 +1,18 @@
 package client;
 
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.WebSocket;
 import java.util.*;
-import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import chess.ChessBoard;
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
 import com.google.gson.Gson;
 import server.ServerFacade;
 import ui.ChessBoardPrinter;
+import websocket.commands.UserGameCommand.*;
+import websocket.messages.ServerMessage;
 
 public class ChessClient {
 
@@ -29,10 +30,12 @@ public class ChessClient {
     private boolean inGame = false;
     private boolean isPlayer = false;
     private String playerColor = null;
-    private WebSocket webSocket;
+    private WebSocketClientHelper webSocket;
+    private final String baseURL;
     private final Gson gson = new Gson();
 
     public ChessClient(String url) {
+        this.baseURL = url;
         this.server = new ServerFacade(url);
     }
 
@@ -132,6 +135,18 @@ public class ChessClient {
 
     private String handlePostlogin(String command, String[] params) {
         try {
+            if (inGame) {
+                return handleInGame(command, params);
+            } else {
+                return handleLobby(command, params);
+            }
+        } catch (RuntimeException e) {
+            return e.getMessage();
+        }
+    }
+
+    private String handleLobby(String command, String[] params) {
+        try {
             return switch (command) {
                 case "logout" -> logout();
                 case "create" -> createGame(params);
@@ -143,6 +158,32 @@ public class ChessClient {
         } catch (RuntimeException ex) {
             return ex.getMessage();
         }
+    }
+
+    private String handleInGame(String command, String[] params) {
+        switch (command) {
+            case "move" -> {
+                String notation = (params.length == 1 ? params[0] : params[0] + params[1]);
+                webSocket.sendMove(notation);
+                return "";
+            }
+            case "resign" -> {
+                webSocket.sendResign();
+                return "You have resigned.";
+            }
+            case "leave" -> {
+                webSocket.sendLeave();
+                inGame = false;
+                return "You have left the game.";
+            }
+            case "highlight" -> {
+                return "";
+            }
+            case "redraw" -> {
+                return "redraw";
+            }
+        }
+        return "Unknown in-game command, Type \"help\" for a list.";
     }
 
     private String logout() {
@@ -234,6 +275,33 @@ public class ChessClient {
         boolean whitePerspective = color.equals("WHITE");
         ChessBoardPrinter.printBoard(board, whitePerspective);
 
+        this.currentGameID = gameID;
+        this.playerColor = color;
+        this.isPlayer = true;
+        this.inGame = true;
+
+        URI webSocketUri = URI.create(baseURL.replaceFirst("^http","ws") + "/ws");
+        webSocket = new WebSocketClientHelper(webSocketUri, authToken, currentGameID,
+                                            new WebSocketClientHelper.Listener() {
+                    @Override
+                    public void onLoadGame(ServerMessage.LoadGame message) {
+                        ChessBoardPrinter.printBoard(
+                                message.getGame().getBoard(),
+                                playerColor.equals("WHITE")
+                        );
+                    }
+                    @Override
+                    public void onNotification(ServerMessage.Notification message) {
+                        System.out.println(message.getNotification());
+                    }
+                    @Override
+                    public void onError(ServerMessage.Error message) {
+                        System.err.println("WebSocket error: " + message.getErrorMessage());
+                    }
+                }
+        );
+
+
         if (playerIsWhite || playerIsBlack) {
             return String.format(
                     "You have rejoined the game \"%s\" (ID=%d) as %s.  (Board printed above)",
@@ -274,9 +342,43 @@ public class ChessClient {
 
         ChessGame liveGame = observeResult.game();
 
+        this.currentGameID = realGameID;
+        this.playerColor   = null;
+        this.isPlayer      = false;
+        this.inGame        = true;
+
         ChessBoard board = liveGame.getBoard();
         ChessBoardPrinter.printBoard(board, true);
         return "Board was printed above, you are now spectating game: " + listedGames.get(index).gameName() + ".";
+    }
+
+    private String move(String[] params) {
+        if (params.length != 1 && params.length != 2) {
+            return "Expected usage: move <e2e4> or move <from> <to>";
+        }
+        String notation = (params.length == 1) ? params[0] : params[0] + params[1];
+        try {
+            webSocket.sendMove(notation);
+            return "";
+        } catch (IllegalArgumentException e) {
+            return "Invalid move notation: " + e.getMessage();
+        }
+    }
+
+    private String resign() {
+        return "";
+    }
+
+    private String highlight(String[] params) {
+        return "";
+    }
+
+    private String redraw() {
+        return "";
+    }
+
+    private String leaveGame() {
+        return "";
     }
 
     public String help() {

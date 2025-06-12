@@ -9,6 +9,7 @@ import static ui.EscapeSequences.*;
 public class ChessBoardPrinter {
 
     public static void printBoard(ChessBoard board, boolean whitePerspective) {
+        System.out.println();
         if (whitePerspective) {
             printWhiteSide(board);
         } else {

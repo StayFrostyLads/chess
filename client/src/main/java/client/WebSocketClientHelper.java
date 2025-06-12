@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import com.google.gson.Gson;
+import websocket.commands.UserGameCommand;
 import websocket.server.GsonFactory;
 import websocket.commands.UserGameCommand.*;
 import websocket.messages.ServerMessage;
@@ -90,17 +91,21 @@ public class WebSocketClientHelper {
 
     public void sendMove(String moveNotation) {
         ChessMove move = parseMoveNotation(moveNotation);
-        MakeMoveCommand command = new MakeMoveCommand( this.authToken, this.gameID, move);
-        webSocket.sendText(gson.toJson(command), true);
+        sendText(new MakeMoveCommand(authToken, gameID, move));
     }
 
     public void sendResign() {
-        webSocket.sendText(gson.toJson(new ResignCommand(this.authToken, this.gameID)), true);
+        sendText(new ResignCommand(authToken, gameID));
     }
 
     public void sendLeave() {
-        webSocket.sendText(gson.toJson(new LeaveCommand(this.authToken, this.gameID)), true).thenRun(
-                () -> webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Thank you for playing!"));
+        sendText(new LeaveCommand(authToken, gameID));
+        webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Thanks for playing!");
+    }
+
+    public void sendText(UserGameCommand command) {
+        String payload = gson.toJson(command);
+        webSocket.sendText(payload, true);
     }
 
 }
