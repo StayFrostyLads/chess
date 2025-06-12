@@ -207,17 +207,15 @@ public class ChessClient {
                 Set<ChessPosition> highlights = legalMoves.stream().map(ChessMove::getEndPosition)
                                                                         .collect(Collectors.toSet());
 
-                boolean whitePerspective = !isPlayer || playerColor.equals("WHITE");
 
-                ChessBoardPrinter.printWithHighlights(gameState.getBoard(), whitePerspective, highlights);
+                ChessBoardPrinter.printWithHighlights(gameState.getBoard(), isWhitePerspective(), highlights);
                 return "";
             }
             case "redraw" -> {
                 if (gameState == null) {
                     return "No game to redraw.";
                 }
-                boolean whitePerspective = !isPlayer || playerColor.equals("WHITE");
-                ChessBoardPrinter.printBoard(gameState.getBoard(), whitePerspective);
+                ChessBoardPrinter.printBoard(gameState.getBoard(), isWhitePerspective());
                 return "";
             }
         }
@@ -317,10 +315,7 @@ public class ChessClient {
                     @Override
                     public void onLoadGame(ServerMessage.LoadGame message) {
                         gameState = message.getGame();
-                        ChessBoardPrinter.printBoard(
-                                message.getGame().getBoard(),
-                                playerColor.equals("WHITE")
-                        );
+                        ChessBoardPrinter.printBoard(message.getGame().getBoard(), isWhitePerspective());
                     }
                     @Override
                     public void onNotification(ServerMessage.Notification message) {
@@ -445,6 +440,12 @@ public class ChessClient {
 
     public boolean isPostLogin() {
         return this.state == State.POSTLOGIN;
+    }
+
+    private boolean isWhitePerspective() {
+        if (!inGame)     return true;
+        if (!isPlayer)   return true;
+        return "WHITE".equals(playerColor);
     }
 
 
