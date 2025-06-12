@@ -324,7 +324,8 @@ public class WebSocketTests {
         if(extraNotification && actualMessages.get(sender.username()).size() > 1) {
             assertCommandMessages(actualMessages, expectSuccess, sender,
                     types(ServerMessageType.LOAD_GAME, ServerMessageType.NOTIFICATION),
-                    inGame, types(ServerMessageType.LOAD_GAME, ServerMessageType.NOTIFICATION, ServerMessageType.NOTIFICATION), otherClients, description);
+                    inGame, types(ServerMessageType.LOAD_GAME, ServerMessageType.NOTIFICATION, ServerMessageType.NOTIFICATION),
+                    otherClients, description);
         }
         else {
             assertCommandMessages(actualMessages, expectSuccess, sender, types(ServerMessageType.LOAD_GAME),
