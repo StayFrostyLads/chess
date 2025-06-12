@@ -134,9 +134,8 @@ public class GameService {
         AuthData auth = authService.validateAuthToken(authToken);
         String username = auth.username();
 
-        GameData gameData = gameDAO.getGame(gameID).orElseThrow(
-                () -> new BadRequestException("Game ID " + gameID + " does not exist"));
-
+        GameData gameData = gameDAO.getGame(gameID)
+                .orElseThrow(() -> new BadRequestException("Game ID " + gameID + " does not exist"));
         ChessGame game = gameData.game();
 
         ChessGame.TeamColor playerColor;
@@ -150,25 +149,21 @@ public class GameService {
 
         if (game.isGameOver()) {
             return new MakeMoveResult(false, game, null,
-                                    false, false, "Game is already over!");
-        }
-
-        if (game.isInCheckmate(WHITE) || game.isInCheckmate(BLACK) ||
-                game.isInStalemate(WHITE) || game.isInStalemate(BLACK)) {
-            return new MakeMoveResult(false, game, null, false,
-                        false, "Game is already over!");
+                    false, false, "Game is already over!");
         }
 
         if (game.getTeamTurn() != playerColor) {
-            return new MakeMoveResult(false, game, null, false,
-                        false, "It is not currently " + playerColor + "'s turn to move!");
+            String error = String.format("Not your turn: it is %s to move, you are %s.",
+                    game.getTeamTurn(), playerColor);
+            return new MakeMoveResult(false, game, null, false, false, error);
         }
 
         try {
             game.makeMove(move);
         } catch (InvalidMoveException e) {
-            return new MakeMoveResult(false, game, null, false,
-                        false, "Illegal move: " + e.getMessage());
+            String error = String.format(
+                    "Illegal move by %s: %s  (%s)", playerColor, move, e.getMessage());
+            return new MakeMoveResult(false, game, null, false, false, error);
         }
 
         try {
@@ -177,13 +172,16 @@ public class GameService {
             throw new ServerException("Failed to save move", e);
         }
 
-        String notification = String.format("%s moved %s to %s", username,
-                                            move.getStartPosition().toAlgebraic(),
-                                            move.getEndPosition().toAlgebraic());
-
         ChessGame.TeamColor opponent = playerColor.other();
-        boolean check = game.isInCheck(opponent);
+        boolean check     = game.isInCheck(opponent);
         boolean checkmate = game.isInCheckmate(opponent);
+        boolean stalemate = game.isInStalemate(opponent);
+
+        if (checkmate || stalemate) {
+            game.setGameOver(true);
+        }
+
+        String notification = String.format("%s moved %s", username, move);
 
         return new MakeMoveResult(true, game, notification, check, checkmate, null);
     }

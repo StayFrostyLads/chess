@@ -36,6 +36,14 @@ public class Server {
     private final BaseHandler<Void, AuthService.ClearResult> clearHandler =
             new BaseHandler<>(request -> authService.clearDatabase(), Void.class);
 
+    private String requireAuthToken(Request request) {
+        String token = request.headers("Authorization");
+        if (token == null || token.isBlank()) {
+            throw new AuthenticationException("Missing or empty Authorization header");
+        }
+        return token;
+    }
+
     public int run(int desiredPort) {
         Spark.port(desiredPort);
         Spark.staticFiles.location("/web");
@@ -55,11 +63,7 @@ public class Server {
 
         // Logout
         Spark.delete("/session", (request, response) -> {
-            String token = request.headers("Authorization");
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken " + token);
-            }
-
+            String token = requireAuthToken(request);
             UserService.LogoutResult result = userService.logout(token);
             response.type("application/json");
             return gson.toJson(result);
@@ -67,11 +71,7 @@ public class Server {
 
         // List Games
         Spark.get("/game", (request, response) -> {
-            String token = request.headers("Authorization");
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken " + token);
-            }
-
+            String token = requireAuthToken(request);
             GameService.ListGamesResult result = gameService.listGames(token);
             response.type("application/json");
             return gson.toJson(result);
@@ -79,7 +79,7 @@ public class Server {
 
         // Create Game
         Spark.post("/game", (request, response) -> {
-            String token = request.headers("Authorization");
+            String token = requireAuthToken(request);
             GameService.CreateGameRequest body = gson.fromJson(request.body(), GameService.CreateGameRequest.class);
             if (body == null || body.gameName() == null || body.gameName().isBlank()) {
                 throw new BadRequestException("Missing or empty gameName");
@@ -92,7 +92,7 @@ public class Server {
 
         // Join Game
         Spark.put("/game", (request, response) -> {
-            String token = request.headers("Authorization");
+            String token = requireAuthToken(request);
 
             GameService.JoinGameRequest body = gson.fromJson(request.body(), GameService.JoinGameRequest.class);
             if (body == null) {
@@ -112,10 +112,7 @@ public class Server {
 
         // Observe Game
         Spark.get("/game/:id", (request, response) -> {
-            String token = request.headers("Authorization");
-            if (token == null || token.isBlank()) {
-                throw new AuthenticationException("Missing authToken");
-            }
+            String token = requireAuthToken(request);
 
             int gameID;
             try {

@@ -51,7 +51,12 @@ public class ChessMove {
 
     @Override
     public String toString() {
-        return startPosition.toString() + "->" + endPosition.toString();
+        String base = startPosition.toString() + "→" + endPosition.toString();
+        if (promotionPiece != null) {
+            char p = Character.toLowerCase(promotionPiece.name().charAt(0));
+            return base + "=" + p;
+        }
+        return base;
     }
 
     /**

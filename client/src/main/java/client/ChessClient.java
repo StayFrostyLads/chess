@@ -323,7 +323,7 @@ public class ChessClient {
                     }
                     @Override
                     public void onError(ServerMessage.Error message) {
-                        System.err.println("WebSocket error: " + message.getErrorMessage());
+                        System.err.println("Error: " + message.getErrorMessage());
                     }
                 }
         );
@@ -447,7 +447,5 @@ public class ChessClient {
         if (!isPlayer)   return true;
         return "WHITE".equals(playerColor);
     }
-
-
 
 }

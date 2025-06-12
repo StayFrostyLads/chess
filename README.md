@@ -36,8 +36,8 @@ You can use the following commands to build, test, package, and run your code.
 | `mvn install`              | Installs the packages into the local repository |
 | `mvn test`                 | Run all the tests                               |
 | `mvn -pl shared test`      | Run all the shared tests                        |
-| `mvn -pl client exec:java` | Build and run the client `Main`                 |
-| `mvn -pl server exec:java` | Build and run the server `Main`                 |
+| `mvn -pl client exec:java` | Build and run the client `ClientMain`                 |
+| `mvn -pl server exec:java` | Build and run the server `ClientMain`                 |
 
 These commands are configured by the `pom.xml` (Project Object Model) files. There is a POM file in the root of the project, and one in each of the modules. The root POM defines any global dependencies and references the module POM files.
 
