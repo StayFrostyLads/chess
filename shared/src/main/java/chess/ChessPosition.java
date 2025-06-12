@@ -53,4 +53,19 @@ public class ChessPosition {
         int rank = row;
         return "" + file + rank;
     }
+
+    public static ChessPosition fromAlgebraic(String algebraicString) {
+        if (algebraicString == null || algebraicString.length() != 2) {
+            throw new IllegalArgumentException("Invalid algebraic coordinates: " + algebraicString);
+        }
+        char file = algebraicString.charAt(0);
+        char rank = algebraicString.charAt(1);
+        int col = file - 'a' + 1;
+        int row = rank - '0';
+        if (col < 1 || col > 8 || row < 1 || row > 8) {
+            throw new IllegalArgumentException("Algebraic coordinates out of bounds: " + algebraicString);
+        }
+        return new ChessPosition(row, col);
+    }
+
 }

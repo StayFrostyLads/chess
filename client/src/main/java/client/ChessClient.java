@@ -1,10 +1,15 @@
 package client;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.WebSocket;
 import java.util.*;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import chess.ChessBoard;
 import chess.ChessGame;
+import com.google.gson.Gson;
 import server.ServerFacade;
 import ui.ChessBoardPrinter;
 
@@ -20,6 +25,12 @@ public class ChessClient {
     private String authToken = null;
     private final ServerFacade server;
     private List<ServerFacade.GameEntry> listedGames = List.of();
+    private int currentGameID = -1;
+    private boolean inGame = false;
+    private boolean isPlayer = false;
+    private String playerColor = null;
+    private WebSocket webSocket;
+    private final Gson gson = new Gson();
 
     public ChessClient(String url) {
         this.server = new ServerFacade(url);
@@ -292,5 +303,7 @@ public class ChessClient {
     public boolean isPostLogin() {
         return this.state == State.POSTLOGIN;
     }
+
+
 
 }
