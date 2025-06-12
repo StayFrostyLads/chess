@@ -27,6 +27,7 @@ public class ChessClient {
     private final ServerFacade server;
     private List<ServerFacade.GameEntry> listedGames = List.of();
     private int currentGameID = -1;
+    private ChessGame gameState = null;
     private boolean inGame = false;
     private boolean isPlayer = false;
     private String playerColor = null;
@@ -163,12 +164,19 @@ public class ChessClient {
     private String handleInGame(String command, String[] params) {
         switch (command) {
             case "move" -> {
+                if (!isPlayer) {
+                    return "Cannot move, you are an observer.";
+                }
                 String notation = (params.length == 1 ? params[0] : params[0] + params[1]);
                 webSocket.sendMove(notation);
                 return "";
             }
             case "resign" -> {
+                if (!isPlayer) {
+                    return "Cannot resign, you are an observer.";
+                }
                 webSocket.sendResign();
+                inGame = false;
                 return "You have resigned.";
             }
             case "leave" -> {
@@ -177,10 +185,15 @@ public class ChessClient {
                 return "You have left the game.";
             }
             case "highlight" -> {
-                return "";
+                return highlight(params);
             }
             case "redraw" -> {
-                return "redraw";
+                if (gameState == null) {
+                    return "No game to redraw.";
+                }
+                boolean whitePerspective = !isPlayer || playerColor.equals("WHITE");
+                ChessBoardPrinter.printBoard(gameState.getBoard(), whitePerspective);
+                return "";
             }
         }
         return "Unknown in-game command, Type \"help\" for a list.";
@@ -268,13 +281,6 @@ public class ChessClient {
             }
         }
 
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
-        // will update to real game state later
-
-        boolean whitePerspective = color.equals("WHITE");
-        ChessBoardPrinter.printBoard(board, whitePerspective);
-
         this.currentGameID = gameID;
         this.playerColor = color;
         this.isPlayer = true;
@@ -285,6 +291,7 @@ public class ChessClient {
                                             new WebSocketClientHelper.Listener() {
                     @Override
                     public void onLoadGame(ServerMessage.LoadGame message) {
+                        gameState = message.getGame();
                         ChessBoardPrinter.printBoard(
                                 message.getGame().getBoard(),
                                 playerColor.equals("WHITE")
@@ -304,11 +311,11 @@ public class ChessClient {
 
         if (playerIsWhite || playerIsBlack) {
             return String.format(
-                    "You have rejoined the game \"%s\" (ID=%d) as %s.  (Board printed above)",
+                    "You have rejoined the game \"%s\" (ID=%d) as %s. ",
                     selectedGame.gameName(), index + 1, color
             );
         } else {
-            return String.format("You successfully joined \"%s\" (ID=%d) as %s.  (Board printed above)",
+            return String.format("You successfully joined \"%s\" (ID=%d) as %s. ",
                     selectedGame.gameName(), index + 1, color);
         }
     }
@@ -341,32 +348,16 @@ public class ChessClient {
         }
 
         ChessGame liveGame = observeResult.game();
+        ChessBoardPrinter.printBoard(liveGame.getBoard(), true);
 
         this.currentGameID = realGameID;
-        this.playerColor   = null;
         this.isPlayer      = false;
         this.inGame        = true;
+        this.playerColor   = null;
 
-        ChessBoard board = liveGame.getBoard();
-        ChessBoardPrinter.printBoard(board, true);
-        return "Board was printed above, you are now spectating game: " + listedGames.get(index).gameName() + ".";
-    }
 
-    private String move(String[] params) {
-        if (params.length != 1 && params.length != 2) {
-            return "Expected usage: move <e2e4> or move <from> <to>";
-        }
-        String notation = (params.length == 1) ? params[0] : params[0] + params[1];
-        try {
-            webSocket.sendMove(notation);
-            return "";
-        } catch (IllegalArgumentException e) {
-            return "Invalid move notation: " + e.getMessage();
-        }
-    }
-
-    private String resign() {
-        return "";
+        gameState = liveGame;
+        return "You are now spectating game: " + listedGames.get(index).gameName() + ".";
     }
 
     private String highlight(String[] params) {
@@ -377,20 +368,17 @@ public class ChessClient {
         return "";
     }
 
-    private String leaveGame() {
-        return "";
-    }
-
     public String help() {
-        if (state == State.PRELOGIN) {
-            return """
+        if (!inGame) {
+            if (state == State.PRELOGIN) {
+                return """
                     register <USERNAME> <PASSWORD> <EMAIL>  - Create an account and log in
                     login <USERNAME> <PASSWORD>             - Log in to an already existing account
                     help                                    - Show this help page
                     quit                                    - Exit this program
                     """;
-        } else {
-            return """
+            } else {
+                return """
                     create <NAME>               - Create a game with the specified game name
                     list                        - List all current existing games
                     join <ID> [WHITE][BLACK]    - Join an existing game as white/black
@@ -399,6 +387,23 @@ public class ChessClient {
                     help                        - Show this help page
                     quit                        - Exit this program
                     """;
+            }
+        } else if (!isPlayer) {
+            return """
+            highlight <e2>    - Show legal moves for that square
+            redraw            - Reprint the current board
+            leave             - Stop spectating and return to lobby
+            help              - Show this help page
+            """;
+        } else {
+            return """
+            move <e2e4>            - Make a move
+            resign                 - Forfeit and end this game
+            highlight <e2>         - Show legal moves for the specified piece
+            redraw                 - Reprint the board
+            leave                  - Leave the game without resigning
+            help                   - Show this help page
+            """;
         }
     }
 
